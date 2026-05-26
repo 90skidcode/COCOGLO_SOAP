@@ -16,6 +16,7 @@
 
 <script>
 tailwind.config = {
+  darkMode: 'class',
   theme: {
     extend: {
       fontFamily: {
@@ -33,9 +34,7 @@ tailwind.config = {
 
 <style>
   body {
-    background-color: #0b0f19;
-    color: #f8fafc;
-    overflow: hidden;
+    transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
   }
   
   /* Scrollbar hide utility */
@@ -52,14 +51,28 @@ tailwind.config = {
     width: 6px;
     height: 6px;
   }
+  
+  /* Light mode scrollbars */
   ::-webkit-scrollbar-track {
-    background: #0f172a;
+    background: #f1f5f9;
   }
   ::-webkit-scrollbar-thumb {
-    background: #334155;
+    background: #cbd5e1;
     border-radius: 3px;
   }
   ::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+  }
+
+  /* Dark mode scrollbars */
+  .dark ::-webkit-scrollbar-track {
+    background: #0f172a;
+  }
+  .dark ::-webkit-scrollbar-thumb {
+    background: #334155;
+    border-radius: 3px;
+  }
+  .dark ::-webkit-scrollbar-thumb:hover {
     background: #475569;
   }
 
@@ -82,7 +95,7 @@ tailwind.config = {
   }
 </style>
 </head>
-<body class="font-sans antialiased text-slate-200">
+<body class="font-sans antialiased bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200">
 
 <!-- Offline Alert Banner -->
 <div id="offlineBanner" class="hidden bg-amber-600 border-b border-amber-500/30 text-amber-50 px-4 py-1.5 text-center text-xs font-semibold flex items-center justify-center gap-2 relative z-50">
@@ -96,35 +109,35 @@ tailwind.config = {
 <div class="flex h-screen w-screen overflow-hidden">
 
   <!-- SIDEBAR: Soap List & Master Rates -->
-  <aside id="sidebar" class="w-64 bg-slate-900 border-r border-slate-800 flex flex-col flex-shrink-0 z-20 transition-transform duration-300 md:translate-x-0 -translate-x-full absolute md:relative h-full">
+  <aside id="sidebar" class="w-64 bg-slate-100 dark:bg-slate-900 border-r border-slate-205 dark:border-slate-800 flex flex-col flex-shrink-0 z-20 transition-transform duration-300 md:translate-x-0 -translate-x-full absolute md:relative h-full">
     
     <!-- Branding Header -->
-    <div class="px-4 py-3 border-b border-slate-800 flex justify-between items-center bg-slate-950/40">
+    <div class="px-4 py-3 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-slate-200/40 dark:bg-slate-950/40">
       <div>
-        <h1 class="text-sm font-extrabold tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-indigo-400">
+        <h1 class="text-sm font-extrabold tracking-wider text-slate-800 dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-r dark:from-violet-400 dark:to-indigo-400">
           COCOGLO SOAP
         </h1>
-        <p class="text-[10px] text-slate-400 font-semibold tracking-tight uppercase">Enterprise ERP v2.0</p>
+        <p class="text-[10px] text-slate-500 dark:text-slate-400 font-semibold tracking-tight uppercase">Enterprise ERP v2.0</p>
       </div>
-      <button onclick="toggleMobileSidebar()" class="md:hidden text-slate-400 hover:text-white">
+      <button onclick="toggleMobileSidebar()" class="md:hidden text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white">
         <i data-lucide="x" class="w-4 h-4"></i>
       </button>
     </div>
 
     <!-- Active Cloud Sync Status indicator -->
-    <div class="px-4 py-2 border-b border-slate-800/80 bg-slate-900/60 flex items-center justify-between text-xs">
+    <div class="px-4 py-2 border-b border-slate-200 dark:border-slate-800/80 bg-slate-200/20 dark:bg-slate-900/60 flex items-center justify-between text-xs">
       <div class="flex items-center gap-1.5">
         <span id="syncDot" class="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-md shadow-emerald-500/50"></span>
-        <span id="syncText" class="text-slate-400 font-medium text-[11px]">Connected to Supabase</span>
+        <span id="syncText" class="text-slate-550 dark:text-slate-400 font-medium text-[11px]">Connected to Supabase</span>
       </div>
-      <button onclick="fetchAllData()" class="text-slate-400 hover:text-white p-0.5 hover:bg-slate-800 rounded transition" title="Force Reload Data">
+      <button onclick="fetchAllData()" class="text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white p-0.5 hover:bg-slate-200 dark:hover:bg-slate-800 rounded transition" title="Force Reload Data">
         <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
       </button>
     </div>
 
     <!-- Add Soap CTA -->
     <div class="p-3">
-      <button onclick="createNewSoap()" class="w-full bg-violet-600 hover:bg-violet-500 active:scale-[0.98] text-white transition-all rounded-lg py-2 px-3 text-xs font-semibold flex items-center justify-center gap-1.5 shadow-md shadow-violet-900/30">
+      <button onclick="createNewSoap()" class="w-full bg-violet-600 hover:bg-violet-500 active:scale-[0.98] text-white transition-all rounded-lg py-2 px-3 text-xs font-semibold flex items-center justify-center gap-1.5 shadow-md shadow-violet-900/20">
         <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>
         Add New Recipe
       </button>
@@ -132,55 +145,54 @@ tailwind.config = {
 
     <!-- Soaps List Section (High Density) -->
     <div class="flex-1 overflow-y-auto px-2 pb-3 scrollbar-hide space-y-1">
-      <div class="px-2 py-1 text-[10px] font-bold text-slate-500 tracking-wider uppercase">Soap Recipes</div>
+      <div class="px-2 py-1 text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-wider uppercase">Soap Recipes</div>
       <div id="soapList" class="space-y-1">
         <!-- Dyn Loaded -->
       </div>
     </div>
 
-    <!-- Collapsible Master Rates Editor Footer -->
-    <div class="border-t border-slate-800 bg-slate-950/80">
-      <button onclick="toggleMasterRates()" class="w-full px-4 py-2.5 flex justify-between items-center text-xs font-bold text-slate-400 hover:text-white hover:bg-slate-800/40 border-b border-slate-800">
-        <span class="flex items-center gap-2">
-          <i data-lucide="dollar-sign" class="w-3.5 h-3.5 text-emerald-500"></i>
-          Master Ingredient Rates
-        </span>
-        <i id="ratesToggleIcon" data-lucide="chevron-up" class="w-3.5 h-3.5 transition-transform duration-200"></i>
+    <!-- Sidebar Materials Catalog Toggle Button Footer -->
+    <div class="p-3 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/80">
+      <button onclick="openMasterRatesModal()" class="w-full bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 active:scale-[0.98] transition-all rounded-lg py-2 px-3 text-xs font-semibold flex items-center justify-center gap-1.5 shadow-sm border border-slate-250 dark:border-slate-700">
+        <i data-lucide="settings-2" class="w-3.5 h-3.5 text-violet-500 dark:text-violet-400"></i>
+        Manage Materials Catalog
       </button>
-      <div id="masterRatesDrawer" class="max-h-64 overflow-y-auto p-2 scrollbar-hide space-y-1 bg-slate-950/60">
-        <!-- Dyn Loaded Rates -->
-      </div>
     </div>
 
   </aside>
 
   <!-- MAIN WORKSPACE -->
-  <main class="flex-1 flex flex-col min-w-0 bg-slate-950 relative">
+  <main class="flex-1 flex flex-col min-w-0 bg-slate-50 dark:bg-slate-950 relative">
 
     <!-- Top Navigation Bar -->
-    <header class="h-12 border-b border-slate-800 bg-slate-900/40 px-4 flex justify-between items-center">
+    <header class="h-12 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/40 px-4 flex justify-between items-center text-slate-800 dark:text-slate-200">
       <div class="flex items-center gap-3">
-        <button onclick="toggleMobileSidebar()" class="md:hidden text-slate-400 hover:text-white p-1 hover:bg-slate-800 rounded">
+        <button onclick="toggleMobileSidebar()" class="md:hidden text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white p-1 hover:bg-slate-200 dark:hover:bg-slate-800 rounded">
           <i data-lucide="menu" class="w-4 h-4"></i>
         </button>
-        <h2 class="text-sm font-bold text-slate-100 flex items-center gap-2">
+        <h2 class="text-sm font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
           <i data-lucide="layout-dashboard" class="w-4 h-4 text-violet-500"></i>
           Costing Workspace
         </h2>
       </div>
 
-      <div class="flex items-center gap-3">
+      <div class="flex items-center gap-2">
         <!-- Quick search recipe -->
-        <div class="relative w-48 md:w-64">
-          <span class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-slate-500">
+        <div class="relative w-40 md:w-56">
+          <span class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-slate-400 dark:text-slate-500">
             <i data-lucide="search" class="w-3.5 h-3.5"></i>
           </span>
-          <input type="text" id="recipeSearch" oninput="filterRecipes()" placeholder="Filter formula names..." class="w-full pl-8 pr-2.5 py-1 text-xs rounded-md bg-slate-800/80 border border-slate-700 text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-violet-500" />
+          <input type="text" id="recipeSearch" oninput="filterRecipes()" placeholder="Filter recipes..." class="w-full pl-8 pr-2.5 py-1 text-xs rounded-md bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 placeholder-slate-450 dark:placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-violet-500" />
         </div>
 
-        <button onclick="exportToPrint()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1 rounded-md text-xs font-semibold flex items-center gap-1.5 transition">
+        <button onclick="exportToPrint()" class="bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-750 dark:text-slate-200 px-3 py-1.5 rounded-md text-xs font-semibold flex items-center gap-1.5 border border-slate-200 dark:border-transparent transition">
           <i data-lucide="printer" class="w-3.5 h-3.5"></i>
           <span class="hidden sm:inline">Print Formula</span>
+        </button>
+
+        <!-- Theme Toggle Button -->
+        <button id="themeToggleBtn" onclick="toggleTheme()" class="bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400 p-1.5 rounded-md border border-slate-200 dark:border-transparent transition" title="Toggle Theme">
+          <i data-lucide="moon" class="w-3.5 h-3.5"></i>
         </button>
       </div>
     </header>
@@ -189,11 +201,11 @@ tailwind.config = {
     <div id="workspaceContent" class="flex-1 flex flex-col lg:flex-row overflow-hidden relative p-3 gap-3">
       
       <!-- Fallback Empty State -->
-      <div id="emptyState" class="hidden absolute inset-0 flex flex-col items-center justify-center bg-slate-950/90 z-10 text-center p-6">
-        <div class="w-12 h-12 bg-slate-900 border border-slate-800 rounded-2xl flex items-center justify-center text-slate-600 mb-3">
+      <div id="emptyState" class="hidden absolute inset-0 flex flex-col items-center justify-center bg-slate-50/90 dark:bg-slate-950/90 z-10 text-center p-6">
+        <div class="w-12 h-12 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl flex items-center justify-center text-slate-400 dark:text-slate-600 mb-3">
           <i data-lucide="beaker" class="w-6 h-6"></i>
         </div>
-        <h3 class="font-bold text-slate-200 text-sm">No Recipe Selected</h3>
+        <h3 class="font-bold text-slate-800 dark:text-slate-200 text-sm">No Recipe Selected</h3>
         <p class="text-xs text-slate-500 mt-1 max-w-sm">Select a recipe from the sidebar or click "+ Add New Recipe" to generate a professional costing matrix.</p>
         <button onclick="createNewSoap()" class="mt-4 bg-violet-600 hover:bg-violet-500 text-white text-xs px-4 py-2 rounded-lg font-semibold transition">
           Create A Formula
@@ -201,50 +213,50 @@ tailwind.config = {
       </div>
 
       <!-- LEFT COLUMN: Recipe Sheet Editor (60% Width) -->
-      <section class="flex-1 flex flex-col bg-slate-900/60 border border-slate-850 rounded-xl overflow-hidden backdrop-blur-md">
+      <section class="flex-1 flex flex-col bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-850 rounded-xl overflow-hidden backdrop-blur-md">
         
         <!-- Recipe General Header Info -->
-        <div class="p-3 border-b border-slate-800/80 bg-slate-900/40 flex flex-wrap items-center justify-between gap-3">
+        <div class="p-3 border-b border-slate-200 dark:border-slate-800/80 bg-slate-50 dark:bg-slate-900/40 flex flex-wrap items-center justify-between gap-3">
           <div class="flex-1 min-w-[200px]">
-            <input type="text" id="activeSoapName" onchange="updateActiveSoapName(this.value)" class="text-base font-bold bg-transparent border-none border-b border-transparent hover:border-slate-700 focus:border-violet-500 focus:outline-none w-full text-slate-100 py-0.5" placeholder="Soap Formula Name..." />
-            <p class="text-[10px] text-slate-500 font-medium mt-0.5">Database ID: <span id="activeSoapId" class="font-mono text-slate-400">Loading...</span></p>
+            <input type="text" id="activeSoapName" onchange="updateActiveSoapName(this.value)" class="text-base font-bold bg-transparent border-none border-b border-transparent hover:border-slate-300 dark:hover:border-slate-700 focus:border-violet-500 focus:outline-none w-full text-slate-850 dark:text-slate-100 py-0.5" placeholder="Soap Formula Name..." />
+            <p class="text-[10px] text-slate-450 dark:text-slate-550 font-semibold mt-0.5 uppercase tracking-wide">Database ID: <span id="activeSoapId" class="font-mono text-slate-600 dark:text-slate-400">Loading...</span></p>
           </div>
           
           <div class="flex items-center gap-3">
             <div class="flex items-center gap-2">
-              <label for="activeSoapLabour" class="text-xs text-slate-400 font-semibold whitespace-nowrap">Labor Cost:</label>
+              <label for="activeSoapLabour" class="text-xs text-slate-500 dark:text-slate-400 font-semibold whitespace-nowrap">Labor Cost:</label>
               <div class="relative w-24">
-                <span class="absolute inset-y-0 left-0 pl-2 flex items-center text-slate-400 text-xs">₹</span>
-                <input type="number" step="1" min="0" id="activeSoapLabour" onchange="updateActiveSoapLabour(this.value)" class="w-full pl-5 pr-2 py-1 text-xs rounded bg-slate-800 border border-slate-700 font-bold text-slate-100" />
+                <span class="absolute inset-y-0 left-0 pl-2 flex items-center text-slate-400 dark:text-slate-500 text-xs">₹</span>
+                <input type="number" step="1" min="0" id="activeSoapLabour" onchange="updateActiveSoapLabour(this.value)" class="w-full pl-5 pr-2 py-1 text-xs rounded bg-white border border-slate-250 dark:bg-slate-800 dark:border-slate-700 font-bold text-slate-800 dark:text-slate-100" />
               </div>
             </div>
           </div>
         </div>
 
         <!-- Real-Time Pricing Summary Banner (Compact KPIs) -->
-        <div class="grid grid-cols-4 border-b border-slate-800/80 bg-slate-900/20 text-center">
-          <div class="p-2.5 border-r border-slate-800/80">
-            <span class="block text-[9px] text-slate-400 uppercase tracking-wider font-semibold">Material Cost</span>
-            <span id="kpiMaterial" class="text-sm sm:text-base font-extrabold text-violet-400">₹0.00</span>
+        <div class="grid grid-cols-4 border-b border-slate-200 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-900/20 text-center">
+          <div class="p-2.5 border-r border-slate-200 dark:border-slate-800/80">
+            <span class="block text-[9px] text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold">Material Cost</span>
+            <span id="kpiMaterial" class="text-sm sm:text-base font-extrabold text-violet-600 dark:text-violet-400">₹0.00</span>
           </div>
-          <div class="p-2.5 border-r border-slate-800/80">
-            <span class="block text-[9px] text-slate-400 uppercase tracking-wider font-semibold">Labour Cost</span>
-            <span id="kpiLabour" class="text-sm sm:text-base font-extrabold text-indigo-400">₹0.00</span>
+          <div class="p-2.5 border-r border-slate-200 dark:border-slate-800/80">
+            <span class="block text-[9px] text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold">Labour Cost</span>
+            <span id="kpiLabour" class="text-sm sm:text-base font-extrabold text-indigo-600 dark:text-indigo-400">₹0.00</span>
           </div>
-          <div class="p-2.5 border-r border-slate-800/80">
-            <span class="block text-[9px] text-slate-400 uppercase tracking-wider font-semibold">Total Production</span>
-            <span id="kpiTotalCost" class="text-sm sm:text-base font-extrabold text-emerald-400">₹0.00</span>
+          <div class="p-2.5 border-r border-slate-200 dark:border-slate-800/80">
+            <span class="block text-[9px] text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold">Total Production</span>
+            <span id="kpiTotalCost" class="text-sm sm:text-base font-extrabold text-emerald-600 dark:text-emerald-400">₹0.00</span>
           </div>
           <div class="p-2.5 bg-violet-600/10">
-            <span class="block text-[9px] text-violet-400 uppercase tracking-wider font-semibold">40% Profit Price</span>
-            <span id="kpi40Profit" class="text-sm sm:text-base font-extrabold text-violet-300">₹0.00</span>
+            <span class="block text-[9px] text-violet-600 dark:text-violet-400 uppercase tracking-wider font-semibold">40% Profit Price</span>
+            <span id="kpi40Profit" class="text-sm sm:text-base font-extrabold text-violet-750 dark:text-violet-300">₹0.00</span>
           </div>
         </div>
 
         <!-- High-Density Costing Spreadsheet Grid -->
         <div class="flex-1 overflow-y-auto scrollbar-hide">
           <table class="w-full text-left border-collapse">
-            <thead class="sticky top-0 bg-slate-900 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-800 z-10">
+            <thead class="sticky top-0 bg-slate-100 dark:bg-slate-900 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider border-b border-slate-200 dark:border-slate-800 z-10">
               <tr>
                 <th class="py-2 px-3 w-5/12">Ingredient</th>
                 <th class="py-2 px-3 w-2/12 text-center">% Ratio</th>
@@ -254,66 +266,66 @@ tailwind.config = {
                 <th class="py-2 px-2 w-10 text-center"></th>
               </tr>
             </thead>
-            <tbody id="recipeTableBody" class="divide-y divide-slate-850 text-xs">
+            <tbody id="recipeTableBody" class="divide-y divide-slate-200 dark:divide-slate-850 text-xs">
               <!-- Dyn Loaded Recipe Rows -->
             </tbody>
           </table>
         </div>
 
         <!-- Add Ingredient Row Footer -->
-        <div class="p-2.5 border-t border-slate-800 bg-slate-900/40 flex justify-between items-center">
-          <button onclick="addRecipeRow()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 active:scale-[0.98] px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition">
-            <i data-lucide="plus" class="w-3.5 h-3.5 text-violet-400"></i>
+        <div class="p-2.5 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/40 flex justify-between items-center">
+          <button onclick="addRecipeRow()" class="bg-white hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-250 dark:border-transparent active:scale-[0.98] px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition">
+            <i data-lucide="plus" class="w-3.5 h-3.5 text-violet-500 dark:text-violet-400"></i>
             Add Ingredient Row
           </button>
           
-          <div class="text-[10px] font-semibold text-slate-500 uppercase flex gap-4">
-            <span>Total Weight: <strong id="totalWeightVal" class="text-slate-300">0.00g</strong></span>
-            <span>Total Cost: <strong id="totalCostVal" class="text-emerald-400">₹0.00</strong></span>
+          <div class="text-[10px] font-semibold text-slate-450 dark:text-slate-500 uppercase flex gap-4">
+            <span>Total Weight: <strong id="totalWeightVal" class="text-slate-700 dark:text-slate-300">0.00g</strong></span>
+            <span>Total Cost: <strong id="totalCostVal" class="text-emerald-600 dark:text-emerald-400">₹0.00</strong></span>
           </div>
         </div>
 
       </section>
 
       <!-- RIGHT COLUMN: Profit Analysis & Sizing Panel (40% Width) -->
-      <section class="w-full lg:w-[400px] flex flex-col bg-slate-900/60 border border-slate-850 rounded-xl overflow-hidden backdrop-blur-md">
+      <section class="w-full lg:w-[400px] flex flex-col bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-850 rounded-xl overflow-hidden backdrop-blur-md">
         
         <!-- Header -->
-        <div class="p-3 border-b border-slate-800/80 bg-slate-900/40 flex items-center justify-between">
-          <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
-            <i data-lucide="trending-up" class="w-4 h-4 text-emerald-500"></i>
+        <div class="p-3 border-b border-slate-200 dark:border-slate-800/80 bg-slate-50 dark:bg-slate-900/40 flex items-center justify-between">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-350 flex items-center gap-1.5">
+            <i data-lucide="trending-up" class="w-4 h-4 text-emerald-600 dark:text-emerald-500"></i>
             Costing & Margin Analysis
           </h3>
-          <div class="text-[10px] text-slate-500 font-semibold uppercase">Interactive Sizer</div>
+          <div class="text-[10px] text-slate-400 dark:text-slate-550 font-semibold uppercase">Interactive Sizer</div>
         </div>
 
         <!-- Custom Batch Output Multiplier Panel -->
-        <div class="p-3 border-b border-slate-800/80 bg-slate-950/20 grid grid-cols-2 gap-3">
+        <div class="p-3 border-b border-slate-200 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-950/20 grid grid-cols-2 gap-3">
           <div>
-            <label class="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Batch Yield Option A</label>
+            <label class="block text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mb-1">Batch Yield Option A</label>
             <div class="flex items-center gap-1.5">
-              <input type="number" id="batchYieldA" value="18" min="1" onchange="recalculateCostings()" class="w-full px-2 py-1 text-xs rounded bg-slate-800 border border-slate-700 text-slate-100 font-bold text-center" />
+              <input type="number" id="batchYieldA" value="18" min="1" onchange="recalculateCostings()" class="w-full px-2 py-1 text-xs rounded bg-white border border-slate-250 dark:bg-slate-800 dark:border-slate-700 text-slate-800 dark:text-slate-100 font-bold text-center" />
               <span class="text-[10px] text-slate-500 font-semibold uppercase">Bars</span>
             </div>
           </div>
           <div>
-            <label class="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Batch Yield Option B</label>
+            <label class="block text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mb-1">Batch Yield Option B</label>
             <div class="flex items-center gap-1.5">
-              <input type="number" id="batchYieldB" value="16" min="1" onchange="recalculateCostings()" class="w-full px-2 py-1 text-xs rounded bg-slate-800 border border-slate-700 text-slate-100 font-bold text-center" />
+              <input type="number" id="batchYieldB" value="16" min="1" onchange="recalculateCostings()" class="w-full px-2 py-1 text-xs rounded bg-white border border-slate-250 dark:bg-slate-800 dark:border-slate-700 text-slate-800 dark:text-slate-100 font-bold text-center" />
               <span class="text-[10px] text-slate-500 font-semibold uppercase">Bars</span>
             </div>
           </div>
         </div>
 
         <!-- KPI Cost per single bar -->
-        <div class="p-3 border-b border-slate-800/50 bg-slate-900/10 grid grid-cols-2 gap-3 text-center">
-          <div class="bg-slate-950/30 rounded-lg p-2 border border-slate-850">
-            <span class="text-[9px] text-slate-500 font-bold uppercase tracking-tight block">Base Cost per Bar (A)</span>
-            <span id="unitCostA" class="text-sm font-extrabold text-indigo-400">₹0.00</span>
+        <div class="p-3 border-b border-slate-205 dark:border-slate-800/50 bg-slate-50/50 dark:bg-slate-900/10 grid grid-cols-2 gap-3 text-center">
+          <div class="bg-slate-50 dark:bg-slate-950/30 rounded-lg p-2 border border-slate-200 dark:border-slate-850">
+            <span class="text-[9px] text-slate-550 dark:text-slate-400 font-bold uppercase tracking-tight block">0% Profit Base Cost/Bar (A)</span>
+            <span id="unitCostA" class="text-sm font-extrabold text-indigo-600 dark:text-indigo-400">₹0.00</span>
           </div>
-          <div class="bg-slate-950/30 rounded-lg p-2 border border-slate-850">
-            <span class="text-[9px] text-slate-500 font-bold uppercase tracking-tight block">Base Cost per Bar (B)</span>
-            <span id="unitCostB" class="text-sm font-extrabold text-emerald-400">₹0.00</span>
+          <div class="bg-slate-50 dark:bg-slate-950/30 rounded-lg p-2 border border-slate-200 dark:border-slate-850">
+            <span class="text-[9px] text-slate-550 dark:text-slate-400 font-bold uppercase tracking-tight block">0% Profit Base Cost/Bar (B)</span>
+            <span id="unitCostB" class="text-sm font-extrabold text-emerald-600 dark:text-emerald-400">₹0.00</span>
           </div>
         </div>
 
@@ -416,11 +428,47 @@ let localState = {
 };
 
 let isOfflineMode = false;
+let currentTheme = 'dark';
 
 // Initial App Startup
 window.addEventListener('DOMContentLoaded', () => {
+  initTheme();
   fetchAllData();
 });
+
+// Dual theme engine initialization
+function initTheme() {
+  currentTheme = localStorage.getItem('soapERP_theme') || 'dark';
+  if (currentTheme === 'dark') {
+    document.documentElement.classList.add('dark');
+  } else {
+    document.documentElement.classList.remove('dark');
+  }
+  updateThemeIcon();
+}
+
+function toggleTheme() {
+  if (document.documentElement.classList.contains('dark')) {
+    document.documentElement.classList.remove('dark');
+    localStorage.setItem('soapERP_theme', 'light');
+    currentTheme = 'light';
+  } else {
+    document.documentElement.classList.add('dark');
+    localStorage.setItem('soapERP_theme', 'dark');
+    currentTheme = 'dark';
+  }
+  updateThemeIcon();
+}
+
+function updateThemeIcon() {
+  const btn = document.getElementById('themeToggleBtn');
+  if (currentTheme === 'dark') {
+    btn.innerHTML = `<i data-lucide="sun" class="w-3.5 h-3.5 text-amber-400"></i>`;
+  } else {
+    btn.innerHTML = `<i data-lucide="moon" class="w-3.5 h-3.5 text-indigo-650"></i>`;
+  }
+  lucide.createIcons();
+}
 
 // Fetch all dataset from Supabase
 async function fetchAllData() {
@@ -483,7 +531,6 @@ async function fetchAllData() {
 
     // Render components
     renderMasterDatalist();
-    renderMasterRatesList();
     renderSidebarSoapList();
     renderActiveSoapWorkspace();
     setSyncStatus('online', 'Database Online & Synced');
@@ -534,7 +581,6 @@ function enableOfflineMode(error) {
 
   // Render components
   renderMasterDatalist();
-  renderMasterRatesList();
   renderSidebarSoapList();
   renderActiveSoapWorkspace();
 }
@@ -553,15 +599,15 @@ function setSyncStatus(state, message) {
   if (state === 'online') {
     syncDot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-md shadow-emerald-500/50';
     syncText.innerText = message;
-    syncText.className = 'text-slate-400 font-medium text-[11px]';
+    syncText.className = 'text-slate-500 dark:text-slate-400 font-medium text-[11px]';
   } else if (state === 'syncing') {
     syncDot.className = 'w-2.5 h-2.5 rounded-full bg-amber-500 shadow-md shadow-amber-500/50 syncing-pulse';
     syncText.innerText = message;
-    syncText.className = 'text-amber-400 font-medium text-[11px]';
+    syncText.className = 'text-amber-500 dark:text-amber-400 font-medium text-[11px]';
   } else {
     syncDot.className = 'w-2.5 h-2.5 rounded-full bg-rose-500 shadow-md shadow-rose-500/50';
     syncText.innerText = message;
-    syncText.className = 'text-rose-400 font-semibold text-[11px]';
+    syncText.className = 'text-rose-500 dark:text-rose-400 font-semibold text-[11px]';
   }
 }
 
@@ -575,7 +621,7 @@ function renderMasterDatalist() {
   listEl.innerHTML = html;
 }
 
-// Sidebar Soaps render
+// Sidebar Soaps render (Theme adaptive styles)
 function renderSidebarSoapList() {
   const listEl = document.getElementById('soapList');
   let html = '';
@@ -583,25 +629,25 @@ function renderSidebarSoapList() {
   localState.soaps.forEach(soap => {
     const isActive = soap.id === localState.activeSoapId;
     const activeClass = isActive 
-      ? 'bg-violet-600/20 text-violet-200 border-l-4 border-violet-500 font-bold' 
-      : 'hover:bg-slate-800/60 text-slate-300 font-medium';
+      ? 'bg-violet-50 text-violet-700 dark:bg-violet-600/20 dark:text-violet-200 border-l-4 border-violet-500 font-bold shadow-sm' 
+      : 'hover:bg-slate-200/60 dark:hover:bg-slate-800/60 text-slate-700 dark:text-slate-300 font-medium';
 
     html += `
       <div class="group relative rounded-md border border-transparent p-2 text-xs flex justify-between items-center transition duration-150 ${activeClass} cursor-pointer" onclick="selectSoap('${soap.id}')">
         <div class="flex-1 min-w-0 pr-6">
           <div class="truncate text-[12px]">${soap.name}</div>
-          <div class="text-[10px] text-slate-500 mt-0.5 flex gap-2">
+          <div class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 flex gap-2">
             <span>${soap.recipe.length} items</span>
             <span>Labour: ₹${soap.labour.toFixed(0)}</span>
           </div>
         </div>
         
         <!-- Recipe Action Buttons -->
-        <div class="absolute right-1.5 top-1/2 -translate-y-1/2 hidden group-hover:flex items-center gap-1.5 bg-slate-900/90 rounded p-1 shadow-md">
-          <button onclick="event.stopPropagation(); cloneSoap('${soap.id}')" class="p-1 hover:bg-slate-800 text-slate-400 hover:text-indigo-400 rounded transition" title="Clone / Duplicate Formula">
+        <div class="absolute right-1.5 top-1/2 -translate-y-1/2 hidden group-hover:flex items-center gap-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded p-1 shadow-md">
+          <button onclick="event.stopPropagation(); cloneSoap('${soap.id}')" class="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-indigo-650 dark:hover:text-indigo-400 rounded transition" title="Clone / Duplicate Formula">
             <i data-lucide="copy" class="w-3.5 h-3.5"></i>
           </button>
-          <button onclick="event.stopPropagation(); deleteSoap('${soap.id}')" class="p-1 hover:bg-slate-800 text-slate-400 hover:text-rose-400 rounded transition" title="Delete Formula">
+          <button onclick="event.stopPropagation(); deleteSoap('${soap.id}')" class="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 rounded transition" title="Delete Formula">
             <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
           </button>
         </div>
@@ -613,27 +659,172 @@ function renderSidebarSoapList() {
   lucide.createIcons();
 }
 
-// Render Master Ingredient rates editor drawer (High Density layout)
-function renderMasterRatesList() {
-  const drawerEl = document.getElementById('masterRatesDrawer');
+// Calculate total usage of an ingredient across all formulas
+function getMaterialUsageCount(materialName) {
+  let count = 0;
+  localState.soaps.forEach(soap => {
+    soap.recipe.forEach(item => {
+      if (item.ingredient === materialName) count++;
+    });
+  });
+  return count;
+}
+
+// REDESIGNED MODAL CATALOG CONTROLS
+function openMasterRatesModal() {
+  document.getElementById('modalMaterialSearch').value = '';
+  document.getElementById('masterRatesModal').classList.remove('hidden');
+  renderModalMaterials();
+}
+
+function closeMasterRatesModal() {
+  document.getElementById('masterRatesModal').classList.add('hidden');
+}
+
+function filterModalMaterials() {
+  renderModalMaterials();
+}
+
+// Render the high-density master materials catalog spreadsheet dialog
+function renderModalMaterials() {
+  const tableBody = document.getElementById('modalMaterialTableBody');
+  const searchQuery = document.getElementById('modalMaterialSearch')?.value.toLowerCase() || '';
   let html = '';
   
   Object.keys(localState.masterIngredients).sort().forEach(name => {
+    if (searchQuery && !name.toLowerCase().includes(searchQuery)) return;
+    
     const rateData = localState.masterIngredients[name];
+    const rateVal = parseFloat(rateData.rate) || 0;
+    const ratePerKg = rateVal * 1000;
+    const usageCount = getMaterialUsageCount(name);
+    
+    // Integrity Safeguard: Lock deletion if material is actively used in recipes
+    const actionHtml = usageCount === 0
+      ? `<button onclick="deleteMasterMaterial('${name}')" class="text-slate-400 hover:text-rose-600 dark:text-slate-500 dark:hover:text-rose-400 p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded transition" title="Delete raw material from database">
+           <i data-lucide="trash" class="w-3.5 h-3.5"></i>
+         </button>`
+      : `<span class="text-slate-400 dark:text-slate-600 cursor-not-allowed inline-block p-1" title="In use by ${usageCount} formula(s). Locked to preserve integrity.">
+           <i data-lucide="lock" class="w-3.5 h-3.5 opacity-40 mx-auto"></i>
+         </span>`;
+
     html += `
-      <div class="flex items-center justify-between text-[11px] py-1 border-b border-slate-850 hover:bg-slate-900/40 px-2 rounded">
-        <span class="truncate font-medium text-slate-300 max-w-[120px]">${name}</span>
-        <div class="relative w-18 flex items-center">
-          <span class="text-slate-500 absolute left-1 text-[10px]">₹</span>
-          <input type="number" step="0.01" min="0" value="${rateData.rate.toFixed(2)}" 
-            onchange="updateMasterRate('${name}', this.value)" 
-            class="w-full bg-slate-800 border border-slate-700 text-slate-200 pl-3.5 pr-1 py-0.5 rounded text-right font-bold text-[10px] focus:outline-none" />
-        </div>
-      </div>
+      <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/20 transition border-b border-slate-200 dark:border-slate-850">
+        <td class="py-1.5 px-3 font-semibold text-slate-800 dark:text-slate-200">
+          ${name}
+        </td>
+        <td class="py-1.5 px-3 text-right">
+          <div class="relative w-20 ml-auto flex items-center">
+            <span class="text-slate-400 absolute left-1.5 text-[10px]">₹</span>
+            <input type="number" step="0.01" min="0" value="${rateVal.toFixed(2)}"
+              onchange="updateMasterRate('${name}', this.value)"
+              class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-250 dark:border-slate-700 text-slate-800 dark:text-slate-200 pl-4 pr-1 py-0.5 rounded text-right font-bold text-[10px] focus:outline-none" />
+          </div>
+        </td>
+        <td class="py-1.5 px-3 text-right font-bold text-emerald-650 dark:text-emerald-450 font-mono pr-5 text-[11px]">
+          ₹${ratePerKg.toFixed(0)}/kg
+        </td>
+        <td class="py-1.5 px-3 text-center">
+          <span class="inline-block bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-bold px-2 py-0.5 rounded text-[10px]">
+            ${usageCount} recipes
+          </span>
+        </td>
+        <td class="py-1.5 px-3 text-center">
+          ${actionHtml}
+        </td>
+      </tr>
     `;
   });
   
-  drawerEl.innerHTML = html;
+  tableBody.innerHTML = html;
+  lucide.createIcons();
+}
+
+// Add new Master Raw Material explicitly from Catalog modal
+async function createNewMasterMaterial() {
+  const nameInput = document.getElementById('newMaterialName');
+  const rateInput = document.getElementById('newMaterialRate');
+  const name = nameInput.value.trim();
+  const rate = parseFloat(rateInput.value) || 0;
+
+  if (!name) {
+    alert('Please enter a valid raw material name.');
+    return;
+  }
+
+  if (localState.masterIngredients[name]) {
+    alert('This material name already exists in the catalog database.');
+    return;
+  }
+
+  setSyncStatus('syncing', `Registering raw material: "${name}"...`);
+  try {
+    if (isOfflineMode) {
+      localState.masterIngredients[name] = {
+        id: 'local-rate-' + Math.random().toString(36).substr(2, 9),
+        rate: rate
+      };
+      saveLocalState();
+      setSyncStatus('online', 'Material added to offline catalog');
+    } else {
+      const { data: newMaster, error } = await supabaseClient
+        .from('ingredients_master')
+        .insert({ name, rate })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      localState.masterIngredients[name] = {
+        id: newMaster.id,
+        rate: parseFloat(newMaster.rate) || 0
+      };
+      setSyncStatus('online', `Material registered successfully`);
+    }
+
+    nameInput.value = '';
+    rateInput.value = '';
+    renderMasterDatalist();
+    renderModalMaterials();
+    renderActiveSoapWorkspace();
+  } catch (err) {
+    console.error(err);
+    setSyncStatus('error', 'Add Material Failed: ' + err.message);
+  }
+}
+
+// Delete Master Raw Material from catalog database
+async function deleteMasterMaterial(name) {
+  if (!confirm(`Are you sure you want to delete "${name}" from the materials catalog?`)) return;
+
+  const rateData = localState.masterIngredients[name];
+  if (!rateData) return;
+
+  setSyncStatus('syncing', `Removing raw material: "${name}"...`);
+  try {
+    if (isOfflineMode) {
+      delete localState.masterIngredients[name];
+      saveLocalState();
+      setSyncStatus('online', 'Material removed from offline catalog');
+    } else {
+      const { error } = await supabaseClient
+        .from('ingredients_master')
+        .delete()
+        .eq('name', name);
+
+      if (error) throw error;
+
+      delete localState.masterIngredients[name];
+      setSyncStatus('online', 'Material deleted successfully');
+    }
+
+    renderMasterDatalist();
+    renderModalMaterials();
+    renderActiveSoapWorkspace();
+  } catch (err) {
+    console.error(err);
+    setSyncStatus('error', 'Delete Material Failed: ' + err.message);
+  }
 }
 
 // Search filter recipes in the workspace
@@ -657,20 +848,6 @@ function selectSoap(id) {
   localState.activeSoapId = id;
   renderSidebarSoapList();
   renderActiveSoapWorkspace();
-}
-
-// Master rates flyout toggle
-function toggleMasterRates() {
-  localState.isRatesDrawerOpen = !localState.isRatesDrawerOpen;
-  const drawer = document.getElementById('masterRatesDrawer');
-  const icon = document.getElementById('ratesToggleIcon');
-  if (localState.isRatesDrawerOpen) {
-    drawer.style.display = 'block';
-    icon.style.transform = 'rotate(0deg)';
-  } else {
-    drawer.style.display = 'none';
-    icon.style.transform = 'rotate(180deg)';
-  }
 }
 
 // Render active soap workspace costing sheet
@@ -699,12 +876,12 @@ function renderActiveSoapWorkspace() {
     const total = (parseFloat(item.gram) || 0) * rate;
 
     tableHtml += `
-      <tr class="hover:bg-slate-800/30 transition border-b border-slate-850">
+      <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition border-b border-slate-200 dark:border-slate-850">
         <!-- Ingredient Name select autocomplete -->
         <td class="p-1.5">
           <input type="text" list="ingredientsDatalist" value="${item.ingredient}"
             onchange="updateRecipeItem(${index}, 'ingredient', this.value)"
-            class="w-full bg-slate-800/80 border border-slate-700 rounded px-2 py-1 text-xs text-slate-100 focus:outline-none placeholder-slate-500 font-medium" 
+            class="w-full bg-slate-100 dark:bg-slate-800/80 border border-slate-250 dark:border-slate-700 rounded px-2 py-1 text-xs text-slate-800 dark:text-slate-100 focus:outline-none placeholder-slate-400 dark:placeholder-slate-500 font-medium shadow-sm" 
             placeholder="Search/Add material..." />
         </td>
 
@@ -712,7 +889,7 @@ function renderActiveSoapWorkspace() {
         <td class="p-1.5 text-center">
           <input type="number" step="any" min="0" value="${item.percentage !== null && item.percentage !== undefined ? item.percentage : ''}"
             onchange="updateRecipeItem(${index}, 'percentage', this.value)"
-            class="w-20 bg-slate-800/80 border border-slate-700 rounded px-2 py-1 text-xs text-slate-100 text-center focus:outline-none" 
+            class="w-20 bg-slate-100 dark:bg-slate-800/80 border border-slate-250 dark:border-slate-700 rounded px-2 py-1 text-xs text-slate-800 dark:text-slate-100 text-center focus:outline-none shadow-sm" 
             placeholder="—" />
         </td>
 
@@ -720,22 +897,22 @@ function renderActiveSoapWorkspace() {
         <td class="p-1.5 text-right">
           <input type="number" step="any" min="0" value="${item.gram}"
             onchange="updateRecipeItem(${index}, 'gram', this.value)"
-            class="w-24 bg-slate-800/80 border border-slate-700 rounded px-2 py-1 text-xs font-bold text-slate-100 text-right focus:outline-none" />
+            class="w-24 bg-slate-100 dark:bg-slate-800/80 border border-slate-250 dark:border-slate-700 rounded px-2 py-1 text-xs font-bold text-slate-800 dark:text-slate-100 text-right focus:outline-none shadow-sm" />
         </td>
 
         <!-- Live Master Rate display -->
-        <td class="p-1.5 text-right font-medium text-slate-400 font-mono text-[11px] pr-3">
+        <td class="p-1.5 text-right font-bold text-slate-700 dark:text-slate-400 font-mono text-[11px] pr-3">
           ₹${rate.toFixed(2)}
         </td>
 
         <!-- Sub total Cost -->
-        <td class="p-1.5 text-right font-bold text-slate-100 font-mono text-[11px] pr-3">
+        <td class="p-1.5 text-right font-extrabold text-slate-800 dark:text-slate-100 font-mono text-[11px] pr-3">
           ₹${total.toFixed(2)}
         </td>
 
         <!-- Remove Actions -->
         <td class="p-1.5 text-center">
-          <button onclick="deleteRecipeRow(${index})" class="text-slate-500 hover:text-rose-400 p-1 hover:bg-slate-800 rounded transition">
+          <button onclick="deleteRecipeRow(${index})" class="text-slate-500 hover:text-rose-600 dark:text-slate-400 dark:hover:text-rose-400 p-1 hover:bg-slate-200 dark:hover:bg-slate-800 rounded transition">
             <i data-lucide="trash" class="w-3.5 h-3.5"></i>
           </button>
         </td>
@@ -800,30 +977,44 @@ function recalculateCostings() {
     const pricePerSoapA = totalSellingPrice / yieldA;
     const pricePerSoapB = totalSellingPrice / yieldB;
 
+    // Dynamic high-fidelity margin bands styling
+    let badgeStyle = '';
+    let borderAccent = '';
+    if (percent <= 30) {
+      badgeStyle = 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900/30';
+      borderAccent = 'border-l-4 border-l-indigo-500';
+    } else if (percent <= 60) {
+      badgeStyle = 'bg-violet-50 dark:bg-violet-950/40 text-violet-700 dark:text-violet-400 border border-violet-100 dark:border-violet-900/30';
+      borderAccent = 'border-l-4 border-l-violet-500';
+    } else {
+      badgeStyle = 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/30';
+      borderAccent = 'border-l-4 border-l-emerald-500';
+    }
+
     profitHtml += `
-      <div class="bg-slate-950/40 hover:bg-slate-900/40 transition border border-slate-850 rounded-lg p-2 flex flex-col gap-1.5">
+      <div class="bg-white dark:bg-slate-950/40 hover:bg-slate-100/50 dark:hover:bg-slate-900/40 transition border border-slate-200 dark:border-slate-850 rounded-lg p-2.5 flex flex-col gap-2 ${borderAccent}">
         <div class="flex justify-between items-center text-xs font-semibold">
-          <div class="flex items-center gap-1.5">
-            <span class="bg-emerald-500/10 text-emerald-400 font-bold px-1.5 py-0.5 rounded text-[10px]">${percent}% Margin</span>
-            <span class="text-slate-300">Total: <strong class="text-emerald-400">₹${totalSellingPrice.toFixed(2)}</strong></span>
+          <div class="flex items-center gap-2">
+            <span class="font-extrabold px-1.5 py-0.5 rounded text-[10px] ${badgeStyle}">${percent}% Margin</span>
+            <span class="text-slate-600 dark:text-slate-350">Total: <strong class="text-slate-900 dark:text-slate-100 font-extrabold">₹${totalSellingPrice.toFixed(2)}</strong></span>
           </div>
-          <span class="text-[10px] text-slate-500 font-bold">Profit: ₹${profitAmount.toFixed(0)}</span>
+          <span class="text-[10px] text-slate-500 dark:text-slate-400 font-bold">Profit: ₹${profitAmount.toFixed(0)}</span>
         </div>
         
-        <!-- Batch sizing prices -->
-        <div class="grid grid-cols-2 gap-2 text-[10px] text-slate-400 py-0.5 font-medium">
-          <div class="flex justify-between px-1.5 py-0.5 bg-slate-900/30 rounded">
-            <span>Yield ${yieldA} (Cost/Bar):</span>
-            <strong class="text-indigo-300 font-mono">₹${pricePerSoapA.toFixed(2)}</strong>
+        <!-- Batch sizing retail prices (Clear pricing per bar labels!) -->
+        <div class="grid grid-cols-2 gap-2 text-[10px] text-slate-600 dark:text-slate-400 font-semibold">
+          <div class="flex justify-between px-2 py-1 bg-slate-50 dark:bg-slate-900/40 rounded border border-slate-100 dark:border-transparent">
+            <span>Yield ${yieldA} Price/Bar:</span>
+            <strong class="text-indigo-650 dark:text-indigo-300 font-mono font-bold">₹${pricePerSoapA.toFixed(2)}</strong>
           </div>
-          <div class="flex justify-between px-1.5 py-0.5 bg-slate-900/30 rounded">
-            <span>Yield ${yieldB} (Cost/Bar):</span>
-            <strong class="text-teal-300 font-mono">₹${pricePerSoapB.toFixed(2)}</strong>
+          <div class="flex justify-between px-2 py-1 bg-slate-50 dark:bg-slate-900/40 rounded border border-slate-100 dark:border-transparent">
+            <span>Yield ${yieldB} Price/Bar:</span>
+            <strong class="text-emerald-650 dark:text-emerald-450 font-mono font-bold">₹${pricePerSoapB.toFixed(2)}</strong>
           </div>
         </div>
 
-        <!-- Profit Ratio Micro-Progress Bar (Compact) -->
-        <div class="w-full bg-slate-800 h-1 rounded-full overflow-hidden">
+        <!-- Profit Ratio Micro-Progress Bar (High contrast track) -->
+        <div class="w-full bg-slate-200 dark:bg-slate-800 h-1 rounded-full overflow-hidden">
           <div class="bg-gradient-to-r from-violet-500 to-emerald-400 h-full" style="width: ${profitRatio}%"></div>
         </div>
       </div>
@@ -1271,6 +1462,70 @@ function exportToPrint() {
   window.print();
 }
 </script>
+
+<!-- Master Ingredients Modal (Redesigned Catalog) -->
+<div id="masterRatesModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-sm p-4">
+  <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-2xl shadow-2xl flex flex-col max-h-[85vh] overflow-hidden">
+    
+    <!-- Modal Header -->
+    <div class="px-4 py-3 border-b border-slate-205 dark:border-slate-800 flex justify-between items-center bg-slate-100/60 dark:bg-slate-950/40">
+      <div>
+        <h3 class="text-sm font-bold text-slate-850 dark:text-slate-100 flex items-center gap-2">
+          <i data-lucide="package" class="w-4 h-4 text-violet-500"></i>
+          Master Raw Materials Catalog
+        </h3>
+        <p class="text-[10px] text-slate-500 dark:text-slate-400 font-semibold tracking-tight uppercase">Update purchase prices & catalog database</p>
+      </div>
+      <button onclick="closeMasterRatesModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+        <i data-lucide="x" class="w-4 h-4"></i>
+      </button>
+    </div>
+
+    <!-- Modal Filter & Add New Bar -->
+    <div class="p-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/30 flex flex-wrap gap-3 justify-between items-center">
+      <!-- Search Filter -->
+      <div class="relative w-full sm:w-48">
+        <span class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-slate-400 dark:text-slate-550">
+          <i data-lucide="search" class="w-3.5 h-3.5"></i>
+        </span>
+        <input type="text" id="modalMaterialSearch" oninput="filterModalMaterials()" placeholder="Search materials..." class="w-full pl-8 pr-2.5 py-1 text-xs rounded-md bg-white border border-slate-250 dark:bg-slate-800 dark:border-slate-700 text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-violet-500" />
+      </div>
+
+      <!-- Add New Master Material inline form -->
+      <div class="flex items-center gap-2 w-full sm:w-auto">
+        <input type="text" id="newMaterialName" placeholder="Add material name..." class="flex-1 sm:flex-initial px-2 py-1 text-xs rounded bg-white dark:bg-slate-800 border border-slate-250 dark:border-slate-700 text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:outline-none" />
+        <input type="number" step="0.01" min="0" id="newMaterialRate" placeholder="₹/g..." class="w-16 px-2 py-1 text-xs rounded bg-white dark:bg-slate-800 border border-slate-250 dark:border-slate-700 text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:outline-none text-right font-semibold" />
+        <button onclick="createNewMasterMaterial()" class="bg-violet-600 hover:bg-violet-500 text-white text-xs font-semibold px-3 py-1.5 rounded transition flex items-center gap-1">
+          <i data-lucide="plus" class="w-3.5 h-3.5"></i> Add
+        </button>
+      </div>
+    </div>
+
+    <!-- Master Ingredients Grid Table (High Density) -->
+    <div class="flex-1 overflow-y-auto p-2 scrollbar-hide">
+      <table class="w-full text-left border-collapse">
+        <thead class="sticky top-0 bg-slate-50 dark:bg-slate-900 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider border-b border-slate-200 dark:border-slate-800 z-10">
+          <tr>
+            <th class="py-2 px-3 w-5/12">Raw Material Name</th>
+            <th class="py-2 px-3 w-2.5/12 text-right">Rate (₹/Gram)</th>
+            <th class="py-2 px-3 w-2.5/12 text-right">Rate (₹/Kg)</th>
+            <th class="py-2 px-3 w-1.5/12 text-center">Usage</th>
+            <th class="py-2 px-3 w-0.5/12 text-center"></th>
+          </tr>
+        </thead>
+        <tbody id="modalMaterialTableBody" class="divide-y divide-slate-100 dark:divide-slate-850 text-xs">
+          <!-- Dyn Loaded modal rows -->
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Modal Footer -->
+    <div class="px-4 py-2.5 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/40 text-right text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase">
+      Tip: Updating raw rates instantly recalculates all soap formulas database-wide.
+    </div>
+
+  </div>
+</div>
 
 </body>
 </html>
