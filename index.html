@@ -1,0 +1,1276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>COCOGLO SOAP | Enterprise Costing ERP</title>
+
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com"></script>
+<!-- Google Fonts (Inter) -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<!-- Lucide Icons -->
+<script src="https://unpkg.com/lucide@latest"></script>
+<!-- Supabase JS Client -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      fontFamily: {
+        sans: ['Inter', 'sans-serif'],
+      },
+      colors: {
+        slate: {
+          950: '#0b0f19',
+        }
+      }
+    }
+  }
+}
+</script>
+
+<style>
+  body {
+    background-color: #0b0f19;
+    color: #f8fafc;
+    overflow: hidden;
+  }
+  
+  /* Scrollbar hide utility */
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+
+  /* Custom compact scrollbar for tables/editors */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #0f172a;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #334155;
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #475569;
+  }
+
+  /* Pulse animation for sync indicator */
+  @keyframes sync-pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.9); }
+  }
+  .syncing-pulse {
+    animation: sync-pulse 1.2s infinite ease-in-out;
+  }
+
+  /* High-density grid tweaks */
+  input, select {
+    transition: all 0.15s ease-in-out;
+  }
+  input:focus, select:focus {
+    box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.4);
+    border-color: #8b5cf6;
+  }
+</style>
+</head>
+<body class="font-sans antialiased text-slate-200">
+
+<!-- Offline Alert Banner -->
+<div id="offlineBanner" class="hidden bg-amber-600 border-b border-amber-500/30 text-amber-50 px-4 py-1.5 text-center text-xs font-semibold flex items-center justify-center gap-2 relative z-50">
+  <i data-lucide="alert-triangle" class="w-4 h-4 animate-bounce text-amber-300"></i>
+  <span>Running in Offline Local Mode. Cloud Sync is disabled because the database schema was not found in Supabase. Please execute the SQL setup script.</span>
+  <button onclick="document.getElementById('offlineBanner').classList.add('hidden')" class="absolute right-3 hover:text-white transition">
+    <i data-lucide="x" class="w-3.5 h-3.5"></i>
+  </button>
+</div>
+
+<div class="flex h-screen w-screen overflow-hidden">
+
+  <!-- SIDEBAR: Soap List & Master Rates -->
+  <aside id="sidebar" class="w-64 bg-slate-900 border-r border-slate-800 flex flex-col flex-shrink-0 z-20 transition-transform duration-300 md:translate-x-0 -translate-x-full absolute md:relative h-full">
+    
+    <!-- Branding Header -->
+    <div class="px-4 py-3 border-b border-slate-800 flex justify-between items-center bg-slate-950/40">
+      <div>
+        <h1 class="text-sm font-extrabold tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-indigo-400">
+          COCOGLO SOAP
+        </h1>
+        <p class="text-[10px] text-slate-400 font-semibold tracking-tight uppercase">Enterprise ERP v2.0</p>
+      </div>
+      <button onclick="toggleMobileSidebar()" class="md:hidden text-slate-400 hover:text-white">
+        <i data-lucide="x" class="w-4 h-4"></i>
+      </button>
+    </div>
+
+    <!-- Active Cloud Sync Status indicator -->
+    <div class="px-4 py-2 border-b border-slate-800/80 bg-slate-900/60 flex items-center justify-between text-xs">
+      <div class="flex items-center gap-1.5">
+        <span id="syncDot" class="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-md shadow-emerald-500/50"></span>
+        <span id="syncText" class="text-slate-400 font-medium text-[11px]">Connected to Supabase</span>
+      </div>
+      <button onclick="fetchAllData()" class="text-slate-400 hover:text-white p-0.5 hover:bg-slate-800 rounded transition" title="Force Reload Data">
+        <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+      </button>
+    </div>
+
+    <!-- Add Soap CTA -->
+    <div class="p-3">
+      <button onclick="createNewSoap()" class="w-full bg-violet-600 hover:bg-violet-500 active:scale-[0.98] text-white transition-all rounded-lg py-2 px-3 text-xs font-semibold flex items-center justify-center gap-1.5 shadow-md shadow-violet-900/30">
+        <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>
+        Add New Recipe
+      </button>
+    </div>
+
+    <!-- Soaps List Section (High Density) -->
+    <div class="flex-1 overflow-y-auto px-2 pb-3 scrollbar-hide space-y-1">
+      <div class="px-2 py-1 text-[10px] font-bold text-slate-500 tracking-wider uppercase">Soap Recipes</div>
+      <div id="soapList" class="space-y-1">
+        <!-- Dyn Loaded -->
+      </div>
+    </div>
+
+    <!-- Collapsible Master Rates Editor Footer -->
+    <div class="border-t border-slate-800 bg-slate-950/80">
+      <button onclick="toggleMasterRates()" class="w-full px-4 py-2.5 flex justify-between items-center text-xs font-bold text-slate-400 hover:text-white hover:bg-slate-800/40 border-b border-slate-800">
+        <span class="flex items-center gap-2">
+          <i data-lucide="dollar-sign" class="w-3.5 h-3.5 text-emerald-500"></i>
+          Master Ingredient Rates
+        </span>
+        <i id="ratesToggleIcon" data-lucide="chevron-up" class="w-3.5 h-3.5 transition-transform duration-200"></i>
+      </button>
+      <div id="masterRatesDrawer" class="max-h-64 overflow-y-auto p-2 scrollbar-hide space-y-1 bg-slate-950/60">
+        <!-- Dyn Loaded Rates -->
+      </div>
+    </div>
+
+  </aside>
+
+  <!-- MAIN WORKSPACE -->
+  <main class="flex-1 flex flex-col min-w-0 bg-slate-950 relative">
+
+    <!-- Top Navigation Bar -->
+    <header class="h-12 border-b border-slate-800 bg-slate-900/40 px-4 flex justify-between items-center">
+      <div class="flex items-center gap-3">
+        <button onclick="toggleMobileSidebar()" class="md:hidden text-slate-400 hover:text-white p-1 hover:bg-slate-800 rounded">
+          <i data-lucide="menu" class="w-4 h-4"></i>
+        </button>
+        <h2 class="text-sm font-bold text-slate-100 flex items-center gap-2">
+          <i data-lucide="layout-dashboard" class="w-4 h-4 text-violet-500"></i>
+          Costing Workspace
+        </h2>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <!-- Quick search recipe -->
+        <div class="relative w-48 md:w-64">
+          <span class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-slate-500">
+            <i data-lucide="search" class="w-3.5 h-3.5"></i>
+          </span>
+          <input type="text" id="recipeSearch" oninput="filterRecipes()" placeholder="Filter formula names..." class="w-full pl-8 pr-2.5 py-1 text-xs rounded-md bg-slate-800/80 border border-slate-700 text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-violet-500" />
+        </div>
+
+        <button onclick="exportToPrint()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1 rounded-md text-xs font-semibold flex items-center gap-1.5 transition">
+          <i data-lucide="printer" class="w-3.5 h-3.5"></i>
+          <span class="hidden sm:inline">Print Formula</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- CONTENT LAYOUT: SPLIT SCREEN (Zero Waste Padding) -->
+    <div id="workspaceContent" class="flex-1 flex flex-col lg:flex-row overflow-hidden relative p-3 gap-3">
+      
+      <!-- Fallback Empty State -->
+      <div id="emptyState" class="hidden absolute inset-0 flex flex-col items-center justify-center bg-slate-950/90 z-10 text-center p-6">
+        <div class="w-12 h-12 bg-slate-900 border border-slate-800 rounded-2xl flex items-center justify-center text-slate-600 mb-3">
+          <i data-lucide="beaker" class="w-6 h-6"></i>
+        </div>
+        <h3 class="font-bold text-slate-200 text-sm">No Recipe Selected</h3>
+        <p class="text-xs text-slate-500 mt-1 max-w-sm">Select a recipe from the sidebar or click "+ Add New Recipe" to generate a professional costing matrix.</p>
+        <button onclick="createNewSoap()" class="mt-4 bg-violet-600 hover:bg-violet-500 text-white text-xs px-4 py-2 rounded-lg font-semibold transition">
+          Create A Formula
+        </button>
+      </div>
+
+      <!-- LEFT COLUMN: Recipe Sheet Editor (60% Width) -->
+      <section class="flex-1 flex flex-col bg-slate-900/60 border border-slate-850 rounded-xl overflow-hidden backdrop-blur-md">
+        
+        <!-- Recipe General Header Info -->
+        <div class="p-3 border-b border-slate-800/80 bg-slate-900/40 flex flex-wrap items-center justify-between gap-3">
+          <div class="flex-1 min-w-[200px]">
+            <input type="text" id="activeSoapName" onchange="updateActiveSoapName(this.value)" class="text-base font-bold bg-transparent border-none border-b border-transparent hover:border-slate-700 focus:border-violet-500 focus:outline-none w-full text-slate-100 py-0.5" placeholder="Soap Formula Name..." />
+            <p class="text-[10px] text-slate-500 font-medium mt-0.5">Database ID: <span id="activeSoapId" class="font-mono text-slate-400">Loading...</span></p>
+          </div>
+          
+          <div class="flex items-center gap-3">
+            <div class="flex items-center gap-2">
+              <label for="activeSoapLabour" class="text-xs text-slate-400 font-semibold whitespace-nowrap">Labor Cost:</label>
+              <div class="relative w-24">
+                <span class="absolute inset-y-0 left-0 pl-2 flex items-center text-slate-400 text-xs">₹</span>
+                <input type="number" step="1" min="0" id="activeSoapLabour" onchange="updateActiveSoapLabour(this.value)" class="w-full pl-5 pr-2 py-1 text-xs rounded bg-slate-800 border border-slate-700 font-bold text-slate-100" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Real-Time Pricing Summary Banner (Compact KPIs) -->
+        <div class="grid grid-cols-4 border-b border-slate-800/80 bg-slate-900/20 text-center">
+          <div class="p-2.5 border-r border-slate-800/80">
+            <span class="block text-[9px] text-slate-400 uppercase tracking-wider font-semibold">Material Cost</span>
+            <span id="kpiMaterial" class="text-sm sm:text-base font-extrabold text-violet-400">₹0.00</span>
+          </div>
+          <div class="p-2.5 border-r border-slate-800/80">
+            <span class="block text-[9px] text-slate-400 uppercase tracking-wider font-semibold">Labour Cost</span>
+            <span id="kpiLabour" class="text-sm sm:text-base font-extrabold text-indigo-400">₹0.00</span>
+          </div>
+          <div class="p-2.5 border-r border-slate-800/80">
+            <span class="block text-[9px] text-slate-400 uppercase tracking-wider font-semibold">Total Production</span>
+            <span id="kpiTotalCost" class="text-sm sm:text-base font-extrabold text-emerald-400">₹0.00</span>
+          </div>
+          <div class="p-2.5 bg-violet-600/10">
+            <span class="block text-[9px] text-violet-400 uppercase tracking-wider font-semibold">40% Profit Price</span>
+            <span id="kpi40Profit" class="text-sm sm:text-base font-extrabold text-violet-300">₹0.00</span>
+          </div>
+        </div>
+
+        <!-- High-Density Costing Spreadsheet Grid -->
+        <div class="flex-1 overflow-y-auto scrollbar-hide">
+          <table class="w-full text-left border-collapse">
+            <thead class="sticky top-0 bg-slate-900 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-800 z-10">
+              <tr>
+                <th class="py-2 px-3 w-5/12">Ingredient</th>
+                <th class="py-2 px-3 w-2/12 text-center">% Ratio</th>
+                <th class="py-2 px-3 w-2/12 text-right">Grams (g)</th>
+                <th class="py-2 px-3 w-1.5/12 text-right">Rate (₹/g)</th>
+                <th class="py-2 px-3 w-1.5/12 text-right">Total Cost</th>
+                <th class="py-2 px-2 w-10 text-center"></th>
+              </tr>
+            </thead>
+            <tbody id="recipeTableBody" class="divide-y divide-slate-850 text-xs">
+              <!-- Dyn Loaded Recipe Rows -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Add Ingredient Row Footer -->
+        <div class="p-2.5 border-t border-slate-800 bg-slate-900/40 flex justify-between items-center">
+          <button onclick="addRecipeRow()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 active:scale-[0.98] px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition">
+            <i data-lucide="plus" class="w-3.5 h-3.5 text-violet-400"></i>
+            Add Ingredient Row
+          </button>
+          
+          <div class="text-[10px] font-semibold text-slate-500 uppercase flex gap-4">
+            <span>Total Weight: <strong id="totalWeightVal" class="text-slate-300">0.00g</strong></span>
+            <span>Total Cost: <strong id="totalCostVal" class="text-emerald-400">₹0.00</strong></span>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- RIGHT COLUMN: Profit Analysis & Sizing Panel (40% Width) -->
+      <section class="w-full lg:w-[400px] flex flex-col bg-slate-900/60 border border-slate-850 rounded-xl overflow-hidden backdrop-blur-md">
+        
+        <!-- Header -->
+        <div class="p-3 border-b border-slate-800/80 bg-slate-900/40 flex items-center justify-between">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+            <i data-lucide="trending-up" class="w-4 h-4 text-emerald-500"></i>
+            Costing & Margin Analysis
+          </h3>
+          <div class="text-[10px] text-slate-500 font-semibold uppercase">Interactive Sizer</div>
+        </div>
+
+        <!-- Custom Batch Output Multiplier Panel -->
+        <div class="p-3 border-b border-slate-800/80 bg-slate-950/20 grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Batch Yield Option A</label>
+            <div class="flex items-center gap-1.5">
+              <input type="number" id="batchYieldA" value="18" min="1" onchange="recalculateCostings()" class="w-full px-2 py-1 text-xs rounded bg-slate-800 border border-slate-700 text-slate-100 font-bold text-center" />
+              <span class="text-[10px] text-slate-500 font-semibold uppercase">Bars</span>
+            </div>
+          </div>
+          <div>
+            <label class="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Batch Yield Option B</label>
+            <div class="flex items-center gap-1.5">
+              <input type="number" id="batchYieldB" value="16" min="1" onchange="recalculateCostings()" class="w-full px-2 py-1 text-xs rounded bg-slate-800 border border-slate-700 text-slate-100 font-bold text-center" />
+              <span class="text-[10px] text-slate-500 font-semibold uppercase">Bars</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- KPI Cost per single bar -->
+        <div class="p-3 border-b border-slate-800/50 bg-slate-900/10 grid grid-cols-2 gap-3 text-center">
+          <div class="bg-slate-950/30 rounded-lg p-2 border border-slate-850">
+            <span class="text-[9px] text-slate-500 font-bold uppercase tracking-tight block">Base Cost per Bar (A)</span>
+            <span id="unitCostA" class="text-sm font-extrabold text-indigo-400">₹0.00</span>
+          </div>
+          <div class="bg-slate-950/30 rounded-lg p-2 border border-slate-850">
+            <span class="text-[9px] text-slate-500 font-bold uppercase tracking-tight block">Base Cost per Bar (B)</span>
+            <span id="unitCostB" class="text-sm font-extrabold text-emerald-400">₹0.00</span>
+          </div>
+        </div>
+
+        <!-- Profit Analysis Grid Table with Micro-Bar displays -->
+        <div class="flex-1 overflow-y-auto p-2 scrollbar-hide">
+          <div class="space-y-1.5" id="profitRowsContainer">
+            <!-- Dynamic Cost Matrix Rows Loaded Here -->
+          </div>
+        </div>
+
+      </section>
+
+    </div>
+  </main>
+</div>
+
+<!-- INGREDIENT AUTO-SUGGEST LIST FOR DROPDOWNS -->
+<datalist id="ingredientsDatalist">
+  <!-- Filled Dynamically -->
+</datalist>
+
+<!-- SCRIPT ENGINE -->
+<script>
+// Initialize Supabase Client
+const supabaseUrl = 'https://wnvpyncniudpibtflnja.supabase.co';
+const supabaseKey = 'sb_publishable_1HLqDg-U-8HOYOCszJNhPA_8FTJJKRC';
+const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+
+// Static seed fallbacks for resilient enterprise offline mode
+const defaultIngredientsMaster = {
+  "Coconut oil": 0.47,
+  "Infuse coconut": 0.47,
+  "Olive oil": 0.61,
+  "Sheabutter": 0.74,
+  "Almond oil": 0.95,
+  "Castor oil": 0.35,
+  "Kumkumadi oil": 3.50,
+  "NaOH": 0.27,
+  "Goat milk": 0.50,
+  "Water": 0.00,
+  "Salt": 0.00,
+  "Sodium Lactate": 0.79,
+  "Colour": 1.29,
+  "Fragrance": 4.99,
+  "Carrot/Beetroot": 100.00
+};
+
+const defaultSoaps = [
+  {
+    id: "local-demo-1",
+    name: "Kumkumadi Goat Milk Soap",
+    labour: 250,
+    recipe: [
+      { ingredient: "Coconut oil", percentage: 29, gram: 435 },
+      { ingredient: "Infuse coconut", percentage: null, gram: 635 },
+      { ingredient: "Olive oil", percentage: 34, gram: 510 },
+      { ingredient: "Sheabutter", percentage: 25, gram: 375 },
+      { ingredient: "Almond oil", percentage: 6, gram: 90 },
+      { ingredient: "Castor oil", percentage: 6, gram: 90 },
+      { ingredient: "Kumkumadi oil", percentage: 2, gram: 30 },
+      { ingredient: "NaOH", percentage: 33, gram: 209.69 },
+      { ingredient: "Goat milk", percentage: 2.03, gram: 425.74 },
+      { ingredient: "Salt", percentage: 1, gram: 15 },
+      { ingredient: "Sodium Lactate", percentage: 2, gram: 30 },
+      { ingredient: "Colour", percentage: 2, gram: 30 },
+      { ingredient: "Fragrance", percentage: 3, gram: 45 },
+      { ingredient: "Carrot/Beetroot", percentage: null, gram: 1 }
+    ]
+  },
+  {
+    id: "local-demo-2",
+    name: "Kumkumadi Water Soap",
+    labour: 250,
+    recipe: [
+      { ingredient: "Coconut oil", percentage: 29, gram: 435 },
+      { ingredient: "Infuse coconut", percentage: null, gram: 635 },
+      { ingredient: "Olive oil", percentage: 34, gram: 510 },
+      { ingredient: "Sheabutter", percentage: 25, gram: 375 },
+      { ingredient: "Almond oil", percentage: 6, gram: 90 },
+      { ingredient: "Castor oil", percentage: 6, gram: 90 },
+      { ingredient: "Kumkumadi oil", percentage: 2, gram: 30 },
+      { ingredient: "NaOH", percentage: 33, gram: 209.69 },
+      { ingredient: "Water", percentage: 2.03, gram: 425.74 },
+      { ingredient: "Salt", percentage: 1, gram: 15 },
+      { ingredient: "Sodium Lactate", percentage: 2, gram: 30 },
+      { ingredient: "Colour", percentage: 2, gram: 30 },
+      { ingredient: "Fragrance", percentage: 3, gram: 45 },
+      { ingredient: "Carrot/Beetroot", percentage: null, gram: 1 }
+    ]
+  }
+];
+
+// ERP Application State
+let localState = {
+  soaps: [],
+  masterIngredients: {},
+  activeSoapId: null,
+  isRatesDrawerOpen: true,
+  isSaving: false
+};
+
+let isOfflineMode = false;
+
+// Initial App Startup
+window.addEventListener('DOMContentLoaded', () => {
+  fetchAllData();
+});
+
+// Fetch all dataset from Supabase
+async function fetchAllData() {
+  setSyncStatus('syncing', 'Syncing Cloud data...');
+  try {
+    // 1. Fetch Ingredients Master Rates
+    const { data: ingredientsData, error: ingError } = await supabaseClient
+      .from('ingredients_master')
+      .select('*')
+      .order('name');
+      
+    if (ingError) throw ingError;
+
+    // Build Master Rates Map
+    localState.masterIngredients = {};
+    ingredientsData.forEach(item => {
+      localState.masterIngredients[item.name] = {
+        id: item.id,
+        rate: parseFloat(item.rate) || 0
+      };
+    });
+
+    // 2. Fetch Soaps & Recipes (joined in one shot!)
+    const { data: soapsData, error: soapsError } = await supabaseClient
+      .from('soaps')
+      .select(`
+        id,
+        name,
+        labour,
+        created_at,
+        recipe_ingredients (
+          id,
+          ingredient,
+          percentage,
+          gram
+        )
+      `)
+      .order('created_at', { ascending: true });
+
+    if (soapsError) throw soapsError;
+
+    localState.soaps = soapsData.map(soap => ({
+      id: soap.id,
+      name: soap.name,
+      labour: parseFloat(soap.labour) || 0,
+      recipe: soap.recipe_ingredients || []
+    }));
+
+    // Populate active soap selection
+    if (localState.soaps.length > 0) {
+      if (!localState.activeSoapId || !localState.soaps.find(s => s.id === localState.activeSoapId)) {
+        localState.activeSoapId = localState.soaps[0].id;
+      }
+    } else {
+      localState.activeSoapId = null;
+    }
+
+    isOfflineMode = false;
+    document.getElementById('offlineBanner').classList.add('hidden');
+
+    // Render components
+    renderMasterDatalist();
+    renderMasterRatesList();
+    renderSidebarSoapList();
+    renderActiveSoapWorkspace();
+    setSyncStatus('online', 'Database Online & Synced');
+  } catch (error) {
+    console.warn('Supabase not fully setup, falling back to local mode:', error);
+    enableOfflineMode(error);
+  }
+}
+
+// Enable Offline Resilient Fallback Mode
+function enableOfflineMode(error) {
+  isOfflineMode = true;
+  document.getElementById('offlineBanner').classList.remove('hidden');
+  setSyncStatus('error', 'Offline (Local Cache)');
+
+  // Load from localStorage or use defaults
+  const cachedSoaps = localStorage.getItem('soapERP_soaps');
+  const cachedRates = localStorage.getItem('soapERP_rates');
+
+  if (cachedRates) {
+    localState.masterIngredients = JSON.parse(cachedRates);
+  } else {
+    localState.masterIngredients = {};
+    Object.keys(defaultIngredientsMaster).forEach(name => {
+      localState.masterIngredients[name] = {
+        id: 'local-rate-' + Math.random().toString(36).substr(2, 9),
+        rate: defaultIngredientsMaster[name]
+      };
+    });
+    localStorage.setItem('soapERP_rates', JSON.stringify(localState.masterIngredients));
+  }
+
+  if (cachedSoaps) {
+    localState.soaps = JSON.parse(cachedSoaps);
+  } else {
+    localState.soaps = JSON.parse(JSON.stringify(defaultSoaps));
+    localStorage.setItem('soapERP_soaps', JSON.stringify(localState.soaps));
+  }
+
+  // Populate active soap selection
+  if (localState.soaps.length > 0) {
+    if (!localState.activeSoapId || !localState.soaps.find(s => s.id === localState.activeSoapId)) {
+      localState.activeSoapId = localState.soaps[0].id;
+    }
+  } else {
+    localState.activeSoapId = null;
+  }
+
+  // Render components
+  renderMasterDatalist();
+  renderMasterRatesList();
+  renderSidebarSoapList();
+  renderActiveSoapWorkspace();
+}
+
+// Local storage state saving helper
+function saveLocalState() {
+  localStorage.setItem('soapERP_soaps', JSON.stringify(localState.soaps));
+  localStorage.setItem('soapERP_rates', JSON.stringify(localState.masterIngredients));
+}
+
+// Set Cloud Status Indicators
+function setSyncStatus(state, message) {
+  const syncDot = document.getElementById('syncDot');
+  const syncText = document.getElementById('syncText');
+  
+  if (state === 'online') {
+    syncDot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-md shadow-emerald-500/50';
+    syncText.innerText = message;
+    syncText.className = 'text-slate-400 font-medium text-[11px]';
+  } else if (state === 'syncing') {
+    syncDot.className = 'w-2.5 h-2.5 rounded-full bg-amber-500 shadow-md shadow-amber-500/50 syncing-pulse';
+    syncText.innerText = message;
+    syncText.className = 'text-amber-400 font-medium text-[11px]';
+  } else {
+    syncDot.className = 'w-2.5 h-2.5 rounded-full bg-rose-500 shadow-md shadow-rose-500/50';
+    syncText.innerText = message;
+    syncText.className = 'text-rose-400 font-semibold text-[11px]';
+  }
+}
+
+// Render Master Search suggestions list
+function renderMasterDatalist() {
+  const listEl = document.getElementById('ingredientsDatalist');
+  let html = '';
+  Object.keys(localState.masterIngredients).forEach(name => {
+    html += `<option value="${name}"></option>`;
+  });
+  listEl.innerHTML = html;
+}
+
+// Sidebar Soaps render
+function renderSidebarSoapList() {
+  const listEl = document.getElementById('soapList');
+  let html = '';
+  
+  localState.soaps.forEach(soap => {
+    const isActive = soap.id === localState.activeSoapId;
+    const activeClass = isActive 
+      ? 'bg-violet-600/20 text-violet-200 border-l-4 border-violet-500 font-bold' 
+      : 'hover:bg-slate-800/60 text-slate-300 font-medium';
+
+    html += `
+      <div class="group relative rounded-md border border-transparent p-2 text-xs flex justify-between items-center transition duration-150 ${activeClass} cursor-pointer" onclick="selectSoap('${soap.id}')">
+        <div class="flex-1 min-w-0 pr-6">
+          <div class="truncate text-[12px]">${soap.name}</div>
+          <div class="text-[10px] text-slate-500 mt-0.5 flex gap-2">
+            <span>${soap.recipe.length} items</span>
+            <span>Labour: ₹${soap.labour.toFixed(0)}</span>
+          </div>
+        </div>
+        
+        <!-- Recipe Action Buttons -->
+        <div class="absolute right-1.5 top-1/2 -translate-y-1/2 hidden group-hover:flex items-center gap-1.5 bg-slate-900/90 rounded p-1 shadow-md">
+          <button onclick="event.stopPropagation(); cloneSoap('${soap.id}')" class="p-1 hover:bg-slate-800 text-slate-400 hover:text-indigo-400 rounded transition" title="Clone / Duplicate Formula">
+            <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+          </button>
+          <button onclick="event.stopPropagation(); deleteSoap('${soap.id}')" class="p-1 hover:bg-slate-800 text-slate-400 hover:text-rose-400 rounded transition" title="Delete Formula">
+            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+          </button>
+        </div>
+      </div>
+    `;
+  });
+  
+  listEl.innerHTML = html;
+  lucide.createIcons();
+}
+
+// Render Master Ingredient rates editor drawer (High Density layout)
+function renderMasterRatesList() {
+  const drawerEl = document.getElementById('masterRatesDrawer');
+  let html = '';
+  
+  Object.keys(localState.masterIngredients).sort().forEach(name => {
+    const rateData = localState.masterIngredients[name];
+    html += `
+      <div class="flex items-center justify-between text-[11px] py-1 border-b border-slate-850 hover:bg-slate-900/40 px-2 rounded">
+        <span class="truncate font-medium text-slate-300 max-w-[120px]">${name}</span>
+        <div class="relative w-18 flex items-center">
+          <span class="text-slate-500 absolute left-1 text-[10px]">₹</span>
+          <input type="number" step="0.01" min="0" value="${rateData.rate.toFixed(2)}" 
+            onchange="updateMasterRate('${name}', this.value)" 
+            class="w-full bg-slate-800 border border-slate-700 text-slate-200 pl-3.5 pr-1 py-0.5 rounded text-right font-bold text-[10px] focus:outline-none" />
+        </div>
+      </div>
+    `;
+  });
+  
+  drawerEl.innerHTML = html;
+}
+
+// Search filter recipes in the workspace
+function filterRecipes() {
+  const query = document.getElementById('recipeSearch').value.toLowerCase();
+  const listEl = document.getElementById('soapList');
+  const childs = listEl.children;
+  
+  for (let i = 0; i < childs.length; i++) {
+    const title = childs[i].querySelector('.truncate').innerText.toLowerCase();
+    if (title.includes(query)) {
+      childs[i].classList.remove('hidden');
+    } else {
+      childs[i].classList.add('hidden');
+    }
+  }
+}
+
+// Select a Soap
+function selectSoap(id) {
+  localState.activeSoapId = id;
+  renderSidebarSoapList();
+  renderActiveSoapWorkspace();
+}
+
+// Master rates flyout toggle
+function toggleMasterRates() {
+  localState.isRatesDrawerOpen = !localState.isRatesDrawerOpen;
+  const drawer = document.getElementById('masterRatesDrawer');
+  const icon = document.getElementById('ratesToggleIcon');
+  if (localState.isRatesDrawerOpen) {
+    drawer.style.display = 'block';
+    icon.style.transform = 'rotate(0deg)';
+  } else {
+    drawer.style.display = 'none';
+    icon.style.transform = 'rotate(180deg)';
+  }
+}
+
+// Render active soap workspace costing sheet
+function renderActiveSoapWorkspace() {
+  const emptyState = document.getElementById('emptyState');
+  const activeSoap = localState.soaps.find(s => s.id === localState.activeSoapId);
+  
+  if (!activeSoap) {
+    emptyState.classList.remove('hidden');
+    return;
+  }
+  
+  emptyState.classList.add('hidden');
+  
+  // Populate general headers
+  document.getElementById('activeSoapId').innerText = activeSoap.id;
+  document.getElementById('activeSoapName').value = activeSoap.name;
+  document.getElementById('activeSoapLabour').value = activeSoap.labour;
+
+  // Build Ingredient costing table rows
+  const tableBody = document.getElementById('recipeTableBody');
+  let tableHtml = '';
+  
+  activeSoap.recipe.forEach((item, index) => {
+    const rate = localState.masterIngredients[item.ingredient]?.rate || 0;
+    const total = (parseFloat(item.gram) || 0) * rate;
+
+    tableHtml += `
+      <tr class="hover:bg-slate-800/30 transition border-b border-slate-850">
+        <!-- Ingredient Name select autocomplete -->
+        <td class="p-1.5">
+          <input type="text" list="ingredientsDatalist" value="${item.ingredient}"
+            onchange="updateRecipeItem(${index}, 'ingredient', this.value)"
+            class="w-full bg-slate-800/80 border border-slate-700 rounded px-2 py-1 text-xs text-slate-100 focus:outline-none placeholder-slate-500 font-medium" 
+            placeholder="Search/Add material..." />
+        </td>
+
+        <!-- Percentage % -->
+        <td class="p-1.5 text-center">
+          <input type="number" step="any" min="0" value="${item.percentage !== null && item.percentage !== undefined ? item.percentage : ''}"
+            onchange="updateRecipeItem(${index}, 'percentage', this.value)"
+            class="w-20 bg-slate-800/80 border border-slate-700 rounded px-2 py-1 text-xs text-slate-100 text-center focus:outline-none" 
+            placeholder="—" />
+        </td>
+
+        <!-- Gram Weight -->
+        <td class="p-1.5 text-right">
+          <input type="number" step="any" min="0" value="${item.gram}"
+            onchange="updateRecipeItem(${index}, 'gram', this.value)"
+            class="w-24 bg-slate-800/80 border border-slate-700 rounded px-2 py-1 text-xs font-bold text-slate-100 text-right focus:outline-none" />
+        </td>
+
+        <!-- Live Master Rate display -->
+        <td class="p-1.5 text-right font-medium text-slate-400 font-mono text-[11px] pr-3">
+          ₹${rate.toFixed(2)}
+        </td>
+
+        <!-- Sub total Cost -->
+        <td class="p-1.5 text-right font-bold text-slate-100 font-mono text-[11px] pr-3">
+          ₹${total.toFixed(2)}
+        </td>
+
+        <!-- Remove Actions -->
+        <td class="p-1.5 text-center">
+          <button onclick="deleteRecipeRow(${index})" class="text-slate-500 hover:text-rose-400 p-1 hover:bg-slate-800 rounded transition">
+            <i data-lucide="trash" class="w-3.5 h-3.5"></i>
+          </button>
+        </td>
+      </tr>
+    `;
+  });
+  
+  tableBody.innerHTML = tableHtml;
+  lucide.createIcons();
+  
+  // Calculate material sums
+  recalculateCostings();
+}
+
+// Live cost calculation engine (Zero latency in memory)
+function recalculateCostings() {
+  const activeSoap = localState.soaps.find(s => s.id === localState.activeSoapId);
+  if (!activeSoap) return;
+  
+  let materialCost = 0;
+  let totalWeight = 0;
+  
+  activeSoap.recipe.forEach(item => {
+    const rate = localState.masterIngredients[item.ingredient]?.rate || 0;
+    const grams = parseFloat(item.gram) || 0;
+    materialCost += grams * rate;
+    totalWeight += grams;
+  });
+  
+  const labour = parseFloat(activeSoap.labour) || 0;
+  const production = materialCost + labour;
+  const profit40 = production * 1.40;
+
+  // Update central workspace KPI numbers
+  document.getElementById('kpiMaterial').innerText = `₹${materialCost.toFixed(2)}`;
+  document.getElementById('kpiLabour').innerText = `₹${labour.toFixed(2)}`;
+  document.getElementById('kpiTotalCost').innerText = `₹${production.toFixed(2)}`;
+  document.getElementById('kpi40Profit').innerText = `₹${profit40.toFixed(2)}`;
+
+  document.getElementById('totalWeightVal').innerText = `${totalWeight.toFixed(2)}g`;
+  document.getElementById('totalCostVal').innerText = `₹${materialCost.toFixed(2)}`;
+
+  // Populate Interactive Profit/Margin Scenario Sizer
+  const yieldA = parseInt(document.getElementById('batchYieldA').value) || 18;
+  const yieldB = parseInt(document.getElementById('batchYieldB').value) || 16;
+
+  const unitCostA = production / yieldA;
+  const unitCostB = production / yieldB;
+
+  document.getElementById('unitCostA').innerText = `₹${unitCostA.toFixed(2)}`;
+  document.getElementById('unitCostB').innerText = `₹${unitCostB.toFixed(2)}`;
+
+  // Build high-density Margin rows (10% -> 100%)
+  const profitRowsContainer = document.getElementById('profitRowsContainer');
+  let profitHtml = '';
+
+  for (let percent = 10; percent <= 100; percent += 10) {
+    const totalSellingPrice = production * (1 + percent / 100);
+    const profitAmount = totalSellingPrice - production;
+    const profitRatio = (profitAmount / totalSellingPrice) * 100;
+
+    const pricePerSoapA = totalSellingPrice / yieldA;
+    const pricePerSoapB = totalSellingPrice / yieldB;
+
+    profitHtml += `
+      <div class="bg-slate-950/40 hover:bg-slate-900/40 transition border border-slate-850 rounded-lg p-2 flex flex-col gap-1.5">
+        <div class="flex justify-between items-center text-xs font-semibold">
+          <div class="flex items-center gap-1.5">
+            <span class="bg-emerald-500/10 text-emerald-400 font-bold px-1.5 py-0.5 rounded text-[10px]">${percent}% Margin</span>
+            <span class="text-slate-300">Total: <strong class="text-emerald-400">₹${totalSellingPrice.toFixed(2)}</strong></span>
+          </div>
+          <span class="text-[10px] text-slate-500 font-bold">Profit: ₹${profitAmount.toFixed(0)}</span>
+        </div>
+        
+        <!-- Batch sizing prices -->
+        <div class="grid grid-cols-2 gap-2 text-[10px] text-slate-400 py-0.5 font-medium">
+          <div class="flex justify-between px-1.5 py-0.5 bg-slate-900/30 rounded">
+            <span>Yield ${yieldA} (Cost/Bar):</span>
+            <strong class="text-indigo-300 font-mono">₹${pricePerSoapA.toFixed(2)}</strong>
+          </div>
+          <div class="flex justify-between px-1.5 py-0.5 bg-slate-900/30 rounded">
+            <span>Yield ${yieldB} (Cost/Bar):</span>
+            <strong class="text-teal-300 font-mono">₹${pricePerSoapB.toFixed(2)}</strong>
+          </div>
+        </div>
+
+        <!-- Profit Ratio Micro-Progress Bar (Compact) -->
+        <div class="w-full bg-slate-800 h-1 rounded-full overflow-hidden">
+          <div class="bg-gradient-to-r from-violet-500 to-emerald-400 h-full" style="width: ${profitRatio}%"></div>
+        </div>
+      </div>
+    `;
+  }
+
+  profitRowsContainer.innerHTML = profitHtml;
+}
+
+// --------------------------------------------------------
+// MUTATION DISPATCHERS (Supports Cloud & Offline Resilient Local modes)
+// --------------------------------------------------------
+
+// Add New Soap recipe
+async function createNewSoap() {
+  if (isOfflineMode) {
+    const newSoap = {
+      id: 'local-' + Date.now(),
+      name: 'New Soap Recipe',
+      labour: 250.00,
+      recipe: [{
+        id: 'local-item-' + Math.random().toString(36).substr(2, 9),
+        ingredient: 'Coconut oil',
+        percentage: 29,
+        gram: 435
+      }]
+    };
+    localState.soaps.push(newSoap);
+    localState.activeSoapId = newSoap.id;
+    saveLocalState();
+    renderSidebarSoapList();
+    renderActiveSoapWorkspace();
+    return;
+  }
+
+  setSyncStatus('syncing', 'Creating formula in Cloud...');
+  try {
+    const { data: newSoap, error: soapError } = await supabaseClient
+      .from('soaps')
+      .insert({
+        name: 'New Soap Recipe',
+        labour: 250.00
+      })
+      .select()
+      .single();
+
+    if (soapError) throw soapError;
+
+    const { data: newRow, error: itemError } = await supabaseClient
+      .from('recipe_ingredients')
+      .insert({
+        soap_id: newSoap.id,
+        ingredient: 'Coconut oil',
+        percentage: 29,
+        gram: 435
+      })
+      .select()
+      .single();
+
+    if (itemError) throw itemError;
+
+    const soapObj = {
+      id: newSoap.id,
+      name: newSoap.name,
+      labour: 250.00,
+      recipe: [{
+        id: newRow.id,
+        ingredient: 'Coconut oil',
+        percentage: 29,
+        gram: 435
+      }]
+    };
+    
+    localState.soaps.push(soapObj);
+    localState.activeSoapId = newSoap.id;
+
+    renderSidebarSoapList();
+    renderActiveSoapWorkspace();
+    setSyncStatus('online', 'New Soap formula added to Cloud');
+  } catch (error) {
+    console.error(error);
+    setSyncStatus('error', 'Add Recipe Failed: ' + error.message);
+  }
+}
+
+// Clone Soap recipe
+async function cloneSoap(soapId) {
+  const soap = localState.soaps.find(s => s.id === soapId);
+  if (!soap) return;
+
+  if (isOfflineMode) {
+    const clonedSoap = {
+      id: 'local-' + Date.now(),
+      name: `${soap.name} (Copy)`,
+      labour: soap.labour,
+      recipe: JSON.parse(JSON.stringify(soap.recipe))
+    };
+    clonedSoap.recipe.forEach(item => {
+      item.id = 'local-item-' + Math.random().toString(36).substr(2, 9);
+    });
+    localState.soaps.push(clonedSoap);
+    localState.activeSoapId = clonedSoap.id;
+    saveLocalState();
+    renderSidebarSoapList();
+    renderActiveSoapWorkspace();
+    return;
+  }
+
+  setSyncStatus('syncing', 'Cloning formula in Cloud...');
+  try {
+    const { data: clonedSoap, error: soapError } = await supabaseClient
+      .from('soaps')
+      .insert({
+        name: `${soap.name} (Copy)`,
+        labour: soap.labour
+      })
+      .select()
+      .single();
+
+    if (soapError) throw soapError;
+
+    if (soap.recipe.length > 0) {
+      const dbRecipeRows = soap.recipe.map(item => ({
+        soap_id: clonedSoap.id,
+        ingredient: item.ingredient,
+        percentage: item.percentage,
+        gram: item.gram
+      }));
+
+      const { error: itemsError } = await supabaseClient
+        .from('recipe_ingredients')
+        .insert(dbRecipeRows);
+
+      if (itemsError) throw itemsError;
+    }
+
+    await fetchAllData();
+    localState.activeSoapId = clonedSoap.id;
+    renderSidebarSoapList();
+    renderActiveSoapWorkspace();
+    setSyncStatus('online', 'Formula cloned successfully!');
+  } catch (error) {
+    console.error(error);
+    setSyncStatus('error', 'Clone Failed: ' + error.message);
+  }
+}
+
+// Delete soap recipe
+async function deleteSoap(soapId) {
+  if (!confirm('Are you absolutely sure you want to delete this soap recipe? This action is permanent.')) return;
+
+  if (isOfflineMode) {
+    localState.soaps = localState.soaps.filter(s => s.id !== soapId);
+    if (localState.activeSoapId === soapId) {
+      localState.activeSoapId = localState.soaps.length > 0 ? localState.soaps[0].id : null;
+    }
+    saveLocalState();
+    renderSidebarSoapList();
+    renderActiveSoapWorkspace();
+    return;
+  }
+
+  setSyncStatus('syncing', 'Deleting recipe in Cloud...');
+  try {
+    const { error } = await supabaseClient
+      .from('soaps')
+      .delete()
+      .eq('id', soapId);
+
+    if (error) throw error;
+
+    localState.soaps = localState.soaps.filter(s => s.id !== soapId);
+    if (localState.activeSoapId === soapId) {
+      localState.activeSoapId = localState.soaps.length > 0 ? localState.soaps[0].id : null;
+    }
+
+    renderSidebarSoapList();
+    renderActiveSoapWorkspace();
+    setSyncStatus('online', 'Formula deleted from Cloud');
+  } catch (error) {
+    console.error(error);
+    setSyncStatus('error', 'Delete Failed: ' + error.message);
+  }
+}
+
+// Update Active Soap Name
+async function updateActiveSoapName(newName) {
+  const activeSoap = localState.soaps.find(s => s.id === localState.activeSoapId);
+  if (!activeSoap || activeSoap.name === newName) return;
+
+  activeSoap.name = newName;
+  renderSidebarSoapList();
+
+  if (isOfflineMode) {
+    saveLocalState();
+    return;
+  }
+
+  setSyncStatus('syncing', 'Saving name changes...');
+  try {
+    const { error } = await supabaseClient
+      .from('soaps')
+      .update({ name: newName })
+      .eq('id', activeSoap.id);
+
+    if (error) throw error;
+    setSyncStatus('online', 'Name updated in Cloud');
+  } catch (error) {
+    console.error(error);
+    setSyncStatus('error', 'Save Failed: ' + error.message);
+  }
+}
+
+// Update Active Soap Labor Cost
+async function updateActiveSoapLabour(newLabourVal) {
+  const activeSoap = localState.soaps.find(s => s.id === localState.activeSoapId);
+  if (!activeSoap) return;
+
+  const labour = parseFloat(newLabourVal) || 0;
+  if (activeSoap.labour === labour) return;
+
+  activeSoap.labour = labour;
+  recalculateCostings();
+
+  if (isOfflineMode) {
+    saveLocalState();
+    return;
+  }
+
+  setSyncStatus('syncing', 'Saving labor cost changes...');
+  try {
+    const { error } = await supabaseClient
+      .from('soaps')
+      .update({ labour: labour })
+      .eq('id', activeSoap.id);
+
+    if (error) throw error;
+    setSyncStatus('online', 'Labor cost updated in Cloud');
+  } catch (error) {
+    console.error(error);
+    setSyncStatus('error', 'Save Failed: ' + error.message);
+  }
+}
+
+// Add empty ingredient costing row
+async function addRecipeRow() {
+  const activeSoap = localState.soaps.find(s => s.id === localState.activeSoapId);
+  if (!activeSoap) return;
+
+  const defaultIngredient = Object.keys(localState.masterIngredients)[0] || 'Water';
+
+  if (isOfflineMode) {
+    const newItem = {
+      id: 'local-item-' + Math.random().toString(36).substr(2, 9),
+      ingredient: defaultIngredient,
+      percentage: 0,
+      gram: 0
+    };
+    activeSoap.recipe.push(newItem);
+    saveLocalState();
+    renderActiveSoapWorkspace();
+    return;
+  }
+
+  setSyncStatus('syncing', 'Adding recipe row in Cloud...');
+  try {
+    const { data: newRow, error } = await supabaseClient
+      .from('recipe_ingredients')
+      .insert({
+        soap_id: activeSoap.id,
+        ingredient: defaultIngredient,
+        percentage: 0,
+        gram: 0
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    activeSoap.recipe.push({
+      id: newRow.id,
+      ingredient: defaultIngredient,
+      percentage: 0,
+      gram: 0
+    });
+
+    renderActiveSoapWorkspace();
+    setSyncStatus('online', 'Added recipe item in Cloud');
+  } catch (error) {
+    console.error(error);
+    setSyncStatus('error', 'Add Item Failed: ' + error.message);
+  }
+}
+
+// Update existing Recipe Ingredient row parameters
+async function updateRecipeItem(index, field, value) {
+  const activeSoap = localState.soaps.find(s => s.id === localState.activeSoapId);
+  if (!activeSoap) return;
+
+  const item = activeSoap.recipe[index];
+  if (!item) return;
+
+  let updatedValue = value;
+  if (field === 'gram') {
+    updatedValue = parseFloat(value) || 0;
+  } else if (field === 'percentage') {
+    updatedValue = value === '' ? null : parseFloat(value);
+  }
+
+  if (field === 'ingredient') {
+    const trimmedVal = value.trim();
+    if (trimmedVal && !localState.masterIngredients[trimmedVal]) {
+      localState.masterIngredients[trimmedVal] = {
+        id: 'local-rate-' + Math.random().toString(36).substr(2, 9),
+        rate: 0.00
+      };
+      
+      if (!isOfflineMode) {
+        setSyncStatus('syncing', `Adding new material: "${trimmedVal}"...`);
+        try {
+          const { data: newMaster, error: masterErr } = await supabaseClient
+            .from('ingredients_master')
+            .insert({ name: trimmedVal, rate: 0.00 })
+            .select()
+            .single();
+
+          if (masterErr) throw masterErr;
+
+          localState.masterIngredients[trimmedVal] = {
+            id: newMaster.id,
+            rate: 0.00
+          };
+        } catch (err) {
+          console.error(err);
+          setSyncStatus('error', 'Failed to register master ingredient: ' + err.message);
+          return;
+        }
+      } else {
+        saveLocalState();
+      }
+      renderMasterDatalist();
+      renderMasterRatesList();
+    }
+    updatedValue = trimmedVal;
+  }
+
+  item[field] = updatedValue;
+  recalculateCostings();
+
+  if (isOfflineMode) {
+    saveLocalState();
+    return;
+  }
+
+  setSyncStatus('syncing', 'Syncing changes to Cloud...');
+  try {
+    const { error } = await supabaseClient
+      .from('recipe_ingredients')
+      .update({ [field]: updatedValue })
+      .eq('id', item.id);
+
+    if (error) throw error;
+    setSyncStatus('online', 'Ingredients matrix updated');
+  } catch (error) {
+    console.error(error);
+    setSyncStatus('error', 'Sync Failed: ' + error.message);
+  }
+}
+
+// Delete Recipe ingredient row
+async function deleteRecipeRow(index) {
+  const activeSoap = localState.soaps.find(s => s.id === localState.activeSoapId);
+  if (!activeSoap) return;
+
+  const item = activeSoap.recipe[index];
+  if (!item) return;
+
+  if (isOfflineMode) {
+    activeSoap.recipe.splice(index, 1);
+    saveLocalState();
+    renderActiveSoapWorkspace();
+    return;
+  }
+
+  setSyncStatus('syncing', 'Removing item from Cloud...');
+  try {
+    const { error } = await supabaseClient
+      .from('recipe_ingredients')
+      .delete()
+      .eq('id', item.id);
+
+    if (error) throw error;
+
+    activeSoap.recipe.splice(index, 1);
+    renderActiveSoapWorkspace();
+    setSyncStatus('online', 'Row removed successfully');
+  } catch (error) {
+    console.error(error);
+    setSyncStatus('error', 'Remove Failed: ' + error.message);
+  }
+}
+
+// Update Master Ingredient Rates
+async function updateMasterRate(name, value) {
+  const rate = parseFloat(value) || 0;
+  const rateData = localState.masterIngredients[name];
+  if (!rateData || rateData.rate === rate) return;
+
+  rateData.rate = rate;
+  recalculateCostings();
+  renderActiveSoapWorkspace();
+
+  if (isOfflineMode) {
+    saveLocalState();
+    return;
+  }
+
+  setSyncStatus('syncing', `Updating rate of ${name}...`);
+  try {
+    const { error } = await supabaseClient
+      .from('ingredients_master')
+      .update({ rate: rate })
+      .eq('id', rateData.id);
+
+    if (error) throw error;
+    setSyncStatus('online', `Rate for ${name} saved to Cloud`);
+  } catch (error) {
+    console.error(error);
+    setSyncStatus('error', 'Rate Save Failed: ' + error.message);
+  }
+}
+
+// --------------------------------------------------------
+// WEB / MOBILE WRAPPER UI TACTICAL CONTROLS
+// --------------------------------------------------------
+
+// Toggle mobile sidebar drawer
+function toggleMobileSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  sidebar.classList.toggle('-translate-x-full');
+}
+
+// Export formula matrix sheet to system printer / PDF
+function exportToPrint() {
+  window.print();
+}
+</script>
+
+</body>
+</html>
