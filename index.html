@@ -93,9 +93,148 @@ tailwind.config = {
     box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.4);
     border-color: #8b5cf6;
   }
+
+  /* Toast animation */
+  @keyframes toast-in {
+    0% { transform: translateY(1rem) scale(0.9); opacity: 0; }
+    100% { transform: translateY(0) scale(1); opacity: 1; }
+  }
+  @keyframes toast-out {
+    0% { transform: translateY(0) scale(1); opacity: 1; }
+    100% { transform: translateY(-1rem) scale(0.9); opacity: 0; }
+  }
+  .animate-toast-in {
+    animation: toast-in 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  .animate-toast-out {
+    animation: toast-out 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  /* Professional print-specific formatting rules */
+  @media print {
+    @page {
+      margin: 1.5cm;
+      size: portrait;
+    }
+
+    /* Hide structural dashboard app controls, sidebars, banners, and buttons */
+    #sidebar,
+    header,
+    #rightCostingPanel,
+    #offlineBanner,
+    #toastContainer,
+    #leftRecipeSheet button,
+    .no-print {
+      display: none !important;
+    }
+
+    /* Reset background colors and text weights for high-contrast ink printing */
+    body, html {
+      background: white !important;
+      color: black !important;
+      font-size: 11pt !important;
+      height: auto !important;
+      overflow: visible !important;
+    }
+
+    /* Expand workspace container to full viewport width */
+    #workspaceContent {
+      padding: 0 !important;
+      margin: 0 !important;
+      display: block !important;
+      overflow: visible !important;
+    }
+
+    #leftRecipeSheet {
+      border: none !important;
+      box-shadow: none !important;
+      background: transparent !important;
+      width: 100% !important;
+      max-width: 100% !important;
+      display: block !important;
+      overflow: visible !important;
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+    }
+
+    /* Convert editable input values into flat static printed text */
+    input, select, textarea {
+      border: none !important;
+      background: transparent !important;
+      box-shadow: none !important;
+      padding: 0 !important;
+      font-weight: bold !important;
+      color: black !important;
+      pointer-events: none !important;
+      appearance: none !important;
+      -webkit-appearance: none !important;
+    }
+
+    /* Hide caret and focus indicators */
+    input:focus, select:focus {
+      box-shadow: none !important;
+      outline: none !important;
+    }
+
+    /* Expand scrollable ingredient table list to print entire recipe */
+    .overflow-y-auto {
+      overflow: visible !important;
+      max-height: none !important;
+      height: auto !important;
+    }
+
+    /* Format table header and rows for professional paper layout */
+    table {
+      width: 100% !important;
+      border-collapse: collapse !important;
+      page-break-inside: auto !important;
+      margin-top: 15px !important;
+    }
+    
+    tr {
+      page-break-inside: avoid !important;
+      page-break-after: auto !important;
+    }
+
+    thead {
+      display: table-header-group !important;
+      background-color: #f8fafc !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    th, td {
+      border-bottom: 1px solid #e2e8f0 !important;
+      padding: 6px 10px !important;
+      color: black !important;
+    }
+
+    th {
+      font-weight: 700 !important;
+      text-transform: uppercase !important;
+      font-size: 9pt !important;
+    }
+
+    /* Hide row-deletion actions column on printed paper */
+    th:last-child, td:last-child {
+      display: none !important;
+    }
+
+    /* Align total calculation columns */
+    .border-t {
+      border-top: 1.5px solid #cbd5e1 !important;
+    }
+
+    .flex {
+      display: flex !important;
+    }
+  }
 </style>
 </head>
 <body class="font-sans antialiased bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200">
+
+<!-- Toast Notification Container -->
+<div id="toastContainer" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
 <!-- Offline Alert Banner -->
 <div id="offlineBanner" class="hidden bg-amber-600 border-b border-amber-500/30 text-amber-50 px-4 py-1.5 text-center text-xs font-semibold flex items-center justify-center gap-2 relative z-50">
@@ -213,7 +352,7 @@ tailwind.config = {
       </div>
 
       <!-- LEFT COLUMN: Recipe Sheet Editor (60% Width) -->
-      <section class="flex-1 flex flex-col bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-850 rounded-xl overflow-hidden backdrop-blur-md">
+      <section id="leftRecipeSheet" class="flex-1 flex flex-col bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-850 rounded-xl overflow-hidden backdrop-blur-md">
         
         <!-- Recipe General Header Info -->
         <div class="p-3 border-b border-slate-200 dark:border-slate-800/80 bg-slate-50 dark:bg-slate-900/40 flex flex-wrap items-center justify-between gap-3">
@@ -223,33 +362,62 @@ tailwind.config = {
           </div>
           
           <div class="flex items-center gap-3">
+            <!-- Batch Weight (g) formulation sizer -->
             <div class="flex items-center gap-2">
-              <label for="activeSoapLabour" class="text-xs text-slate-500 dark:text-slate-400 font-semibold whitespace-nowrap">Labor Cost:</label>
+              <label for="activeSoapTotalGrams" class="text-xs text-slate-500 dark:text-slate-400 font-semibold whitespace-nowrap">Batch Weight:</label>
+              <div class="relative w-28">
+                <input type="number" step="any" min="1" id="activeSoapTotalGrams" onchange="updateActiveSoapTotalGrams(this.value)" class="w-full pl-2 pr-6 py-1 text-xs rounded bg-white border border-slate-250 dark:bg-slate-800 dark:border-slate-700 font-bold text-slate-800 dark:text-slate-100 shadow-sm" />
+                <span class="absolute inset-y-0 right-2 flex items-center text-slate-400 dark:text-slate-550 text-[10px] font-bold">g</span>
+              </div>
+            </div>
+
+            <!-- Labor Cost -->
+            <div class="flex items-center gap-2">
+              <label for="activeSoapLabour" class="text-xs text-slate-550 dark:text-slate-400 font-semibold whitespace-nowrap">Labor Cost:</label>
               <div class="relative w-24">
-                <span class="absolute inset-y-0 left-0 pl-2 flex items-center text-slate-400 dark:text-slate-500 text-xs">₹</span>
+                <span class="absolute inset-y-0 left-0 pl-2 flex items-center text-slate-400 dark:text-slate-555 text-xs">₹</span>
                 <input type="number" step="1" min="0" id="activeSoapLabour" onchange="updateActiveSoapLabour(this.value)" class="w-full pl-5 pr-2 py-1 text-xs rounded bg-white border border-slate-250 dark:bg-slate-800 dark:border-slate-700 font-bold text-slate-800 dark:text-slate-100" />
               </div>
+            </div>
+
+            <!-- Save & Reset Action Buttons -->
+            <div class="flex items-center gap-1.5 ml-2 border-l border-slate-200 dark:border-slate-850 pl-3">
+              <button onclick="saveActiveSoap()" id="saveBtn" class="bg-emerald-600 hover:bg-emerald-500 active:scale-[0.98] text-white transition-all rounded-md px-2.5 py-1.5 text-xs font-semibold flex items-center gap-1 shadow-sm border border-transparent relative" title="Save Recipe Changes to Database">
+                <i data-lucide="save" class="w-3.5 h-3.5"></i>
+                <span class="hidden md:inline">Save</span>
+                <span id="unsavedDot" class="hidden absolute -top-1 -right-1 w-2.5 h-2.5 bg-rose-500 border-2 border-white dark:border-slate-900 rounded-full animate-pulse shadow-md"></span>
+              </button>
+              <button onclick="resetActiveSoap()" class="bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 active:scale-[0.98] text-slate-700 dark:text-slate-200 transition-all rounded-md px-2.5 py-1.5 text-xs font-semibold flex items-center gap-1 border border-slate-250 dark:border-slate-700" title="Discard unsaved edits and reload from database">
+                <i data-lucide="rotate-ccw" class="w-3.5 h-3.5 text-amber-500"></i>
+                <span class="hidden md:inline">Reset</span>
+              </button>
             </div>
           </div>
         </div>
 
         <!-- Real-Time Pricing Summary Banner (Compact KPIs) -->
-        <div class="grid grid-cols-4 border-b border-slate-200 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-900/20 text-center">
-          <div class="p-2.5 border-r border-slate-200 dark:border-slate-800/80">
+        <div class="grid grid-cols-5 border-b border-slate-200 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-900/20 text-center">
+          <div class="p-2 border-r border-slate-200 dark:border-slate-800/80 flex flex-col justify-center">
             <span class="block text-[9px] text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold">Material Cost</span>
-            <span id="kpiMaterial" class="text-sm sm:text-base font-extrabold text-violet-600 dark:text-violet-400">₹0.00</span>
+            <span id="kpiMaterial" class="text-xs sm:text-sm font-extrabold text-violet-600 dark:text-violet-400">₹0.00</span>
           </div>
-          <div class="p-2.5 border-r border-slate-200 dark:border-slate-800/80">
+          <div class="p-2 border-r border-slate-200 dark:border-slate-800/80 flex flex-col justify-center">
             <span class="block text-[9px] text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold">Labour Cost</span>
-            <span id="kpiLabour" class="text-sm sm:text-base font-extrabold text-indigo-600 dark:text-indigo-400">₹0.00</span>
+            <span id="kpiLabour" class="text-xs sm:text-sm font-extrabold text-indigo-600 dark:text-indigo-400">₹0.00</span>
           </div>
-          <div class="p-2.5 border-r border-slate-200 dark:border-slate-800/80">
+          <div class="p-2 border-r border-slate-200 dark:border-slate-800/80 flex flex-col justify-center">
             <span class="block text-[9px] text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold">Total Production</span>
-            <span id="kpiTotalCost" class="text-sm sm:text-base font-extrabold text-emerald-600 dark:text-emerald-400">₹0.00</span>
+            <span id="kpiTotalCost" class="text-xs sm:text-sm font-extrabold text-emerald-600 dark:text-emerald-400">₹0.00</span>
           </div>
-          <div class="p-2.5 bg-violet-600/10">
+          <div class="p-2 border-r border-slate-200 dark:border-slate-800/80 bg-indigo-600/10 flex flex-col justify-center">
+            <span class="block text-[9px] text-indigo-600 dark:text-indigo-400 uppercase tracking-wider font-semibold">30% Profit Price</span>
+            <span id="kpi30Profit" class="text-xs sm:text-sm font-extrabold text-indigo-850 dark:text-indigo-300">₹0.00</span>
+            <span id="kpi30YieldDetails" class="block text-[8px] sm:text-[9px] text-indigo-700 dark:text-indigo-400 font-bold mt-0.5">Y18: ₹0.00</span>
+          </div>
+          <div class="p-2 bg-violet-600/10 flex flex-col justify-center">
             <span class="block text-[9px] text-violet-600 dark:text-violet-400 uppercase tracking-wider font-semibold">40% Profit Price</span>
-            <span id="kpi40Profit" class="text-sm sm:text-base font-extrabold text-violet-750 dark:text-violet-300">₹0.00</span>
+            <span id="kpi40Profit" class="text-xs sm:text-sm font-extrabold text-violet-750 dark:text-violet-300">₹0.00</span>
+            <span id="kpi40YieldDetails" class="block text-[8px] sm:text-[9px] text-violet-700 dark:text-violet-400 font-bold mt-0.5">Y18: ₹0.00</span>
           </div>
         </div>
 
@@ -288,7 +456,7 @@ tailwind.config = {
       </section>
 
       <!-- RIGHT COLUMN: Profit Analysis & Sizing Panel (40% Width) -->
-      <section class="w-full lg:w-[400px] flex flex-col bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-850 rounded-xl overflow-hidden backdrop-blur-md">
+      <section id="rightCostingPanel" class="w-full lg:w-[400px] flex flex-col bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-850 rounded-xl overflow-hidden backdrop-blur-md">
         
         <!-- Header -->
         <div class="p-3 border-b border-slate-200 dark:border-slate-800/80 bg-slate-50 dark:bg-slate-900/40 flex items-center justify-between">
@@ -299,33 +467,92 @@ tailwind.config = {
           <div class="text-[10px] text-slate-400 dark:text-slate-550 font-semibold uppercase">Interactive Sizer</div>
         </div>
 
-        <!-- Custom Batch Output Multiplier Panel -->
-        <div class="p-3 border-b border-slate-200 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-950/20 grid grid-cols-2 gap-3">
+        <!-- Yield Calculation Mode Toggle -->
+        <div class="px-3 py-2 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/20 flex justify-between items-center text-xs">
+          <label for="yieldCalculationMode" class="font-bold text-slate-550 dark:text-slate-400 uppercase tracking-wider text-[10px]">Calculation Mode</label>
+          <select id="yieldCalculationMode" onchange="updateActiveSoapYieldMode(this.value)" class="bg-white dark:bg-slate-800 border border-slate-250 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded px-1.5 py-0.5 text-xs font-bold focus:outline-none">
+            <option value="count">Fixed Bar Counts</option>
+            <option value="weight">Bar Weight Slices</option>
+          </select>
+        </div>
+
+        <!-- Count Mode Container Panel -->
+        <div id="countModePanel" class="p-3 border-b border-slate-200 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-950/20 grid grid-cols-2 gap-3">
           <div>
             <label class="block text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mb-1">Batch Yield Option A</label>
             <div class="flex items-center gap-1.5">
-              <input type="number" id="batchYieldA" value="18" min="1" onchange="recalculateCostings()" class="w-full px-2 py-1 text-xs rounded bg-white border border-slate-250 dark:bg-slate-800 dark:border-slate-700 text-slate-800 dark:text-slate-100 font-bold text-center" />
+              <input type="number" id="batchYieldA" value="18" min="1" onchange="updateActiveSoapYieldA(this.value)" class="w-full px-2 py-1 text-xs rounded bg-white border border-slate-250 dark:bg-slate-800 dark:border-slate-700 text-slate-800 dark:text-slate-100 font-bold text-center" />
               <span class="text-[10px] text-slate-500 font-semibold uppercase">Bars</span>
             </div>
           </div>
           <div>
             <label class="block text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mb-1">Batch Yield Option B</label>
             <div class="flex items-center gap-1.5">
-              <input type="number" id="batchYieldB" value="16" min="1" onchange="recalculateCostings()" class="w-full px-2 py-1 text-xs rounded bg-white border border-slate-250 dark:bg-slate-800 dark:border-slate-700 text-slate-800 dark:text-slate-100 font-bold text-center" />
+              <input type="number" id="batchYieldB" value="16" min="1" onchange="updateActiveSoapYieldB(this.value)" class="w-full px-2 py-1 text-xs rounded bg-white border border-slate-250 dark:bg-slate-800 dark:border-slate-700 text-slate-800 dark:text-slate-100 font-bold text-center" />
               <span class="text-[10px] text-slate-500 font-semibold uppercase">Bars</span>
             </div>
           </div>
         </div>
 
-        <!-- KPI Cost per single bar -->
-        <div class="p-3 border-b border-slate-205 dark:border-slate-800/50 bg-slate-50/50 dark:bg-slate-900/10 grid grid-cols-2 gap-3 text-center">
-          <div class="bg-slate-50 dark:bg-slate-950/30 rounded-lg p-2 border border-slate-200 dark:border-slate-850">
-            <span class="text-[9px] text-slate-550 dark:text-slate-400 font-bold uppercase tracking-tight block">0% Profit Base Cost/Bar (A)</span>
-            <span id="unitCostA" class="text-sm font-extrabold text-indigo-600 dark:text-indigo-400">₹0.00</span>
+        <!-- Weight Mode Container Panel -->
+        <div id="weightModePanel" class="hidden p-3 border-b border-slate-200 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-950/20 grid grid-cols-3 gap-2">
+          <div>
+            <label class="block text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mb-1">Total Slab Weight</label>
+            <div class="flex items-center gap-1">
+              <input type="number" id="calcSlabGrams" min="1" step="any" onchange="updateActiveSoapSlabGrams(this.value)" class="w-full px-1.5 py-1 text-xs rounded bg-white border border-slate-250 dark:bg-slate-800 dark:border-slate-700 text-slate-800 dark:text-slate-100 font-bold text-center" />
+              <span class="text-[9px] text-slate-500 font-semibold uppercase">g</span>
+            </div>
           </div>
-          <div class="bg-slate-50 dark:bg-slate-950/30 rounded-lg p-2 border border-slate-200 dark:border-slate-850">
-            <span class="text-[9px] text-slate-550 dark:text-slate-400 font-bold uppercase tracking-tight block">0% Profit Base Cost/Bar (B)</span>
-            <span id="unitCostB" class="text-sm font-extrabold text-emerald-600 dark:text-emerald-400">₹0.00</span>
+          <div>
+            <label class="block text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mb-1">Per Bar Wt (YA)</label>
+            <div class="flex items-center gap-1">
+              <input type="number" id="weightA" min="1" step="any" onchange="updateActiveSoapWeightA(this.value)" class="w-full px-1.5 py-1 text-xs rounded bg-white border border-slate-250 dark:bg-slate-800 dark:border-slate-700 text-slate-800 dark:text-slate-100 font-bold text-center" />
+              <span class="text-[9px] text-slate-500 font-semibold uppercase">g</span>
+            </div>
+          </div>
+          <div>
+            <label class="block text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mb-1">Per Bar Wt (YB)</label>
+            <div class="flex items-center gap-1">
+              <input type="number" id="weightB" min="1" step="any" onchange="updateActiveSoapWeightB(this.value)" class="w-full px-1.5 py-1 text-xs rounded bg-white border border-slate-250 dark:bg-slate-800 dark:border-slate-700 text-slate-800 dark:text-slate-100 font-bold text-center" />
+              <span class="text-[9px] text-slate-500 font-semibold uppercase">g</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- KPI Cost per single bar and Wastage Stats -->
+        <div class="p-2.5 border-b border-slate-205 dark:border-slate-800/50 bg-slate-50/50 dark:bg-slate-900/10 grid grid-cols-2 gap-2 text-center text-xs">
+          <!-- Option A Stats -->
+          <div class="bg-slate-50 dark:bg-slate-950/30 rounded-lg p-2 border border-slate-200 dark:border-slate-850 flex flex-col gap-1">
+            <span class="text-[9px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-tight block">Option A Profile</span>
+            <div class="flex justify-between px-1 text-[10px] text-slate-600 dark:text-slate-400 border-b border-slate-200/50 dark:border-slate-800/50 pb-0.5">
+              <span>Yield:</span>
+              <strong id="calculatedYieldA" class="text-slate-800 dark:text-slate-200">0 Bars</strong>
+            </div>
+            <div class="flex justify-between px-1 text-[10px] text-slate-600 dark:text-slate-400 border-b border-slate-200/50 dark:border-slate-800/50 pb-0.5">
+              <span>Scrap:</span>
+              <strong id="calculatedWastageA" class="text-amber-600 dark:text-amber-500">0.00g (0%)</strong>
+            </div>
+            <div class="flex justify-between px-1 text-[10px] text-slate-600 dark:text-slate-400 pt-0.5">
+              <span>Cost/Bar:</span>
+              <strong id="unitCostA" class="text-indigo-650 dark:text-indigo-400 font-bold font-mono">₹0.00</strong>
+            </div>
+          </div>
+          
+          <!-- Option B Stats -->
+          <div class="bg-slate-50 dark:bg-slate-950/30 rounded-lg p-2 border border-slate-200 dark:border-slate-850 flex flex-col gap-1">
+            <span class="text-[9px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-tight block">Option B Profile</span>
+            <div class="flex justify-between px-1 text-[10px] text-slate-600 dark:text-slate-400 border-b border-slate-200/50 dark:border-slate-800/50 pb-0.5">
+              <span>Yield:</span>
+              <strong id="calculatedYieldB" class="text-slate-800 dark:text-slate-200">0 Bars</strong>
+            </div>
+            <div class="flex justify-between px-1 text-[10px] text-slate-600 dark:text-slate-400 border-b border-slate-200/50 dark:border-slate-800/50 pb-0.5">
+              <span>Scrap:</span>
+              <strong id="calculatedWastageB" class="text-amber-600 dark:text-amber-500">0.00g (0%)</strong>
+            </div>
+            <div class="flex justify-between px-1 text-[10px] text-slate-600 dark:text-slate-400 pt-0.5">
+              <span>Cost/Bar:</span>
+              <strong id="unitCostB" class="text-emerald-650 dark:text-emerald-450 font-bold font-mono">₹0.00</strong>
+            </div>
           </div>
         </div>
 
@@ -374,48 +601,7 @@ const defaultIngredientsMaster = {
 };
 
 const defaultSoaps = [
-  {
-    id: "local-demo-1",
-    name: "Kumkumadi Goat Milk Soap",
-    labour: 250,
-    recipe: [
-      { ingredient: "Coconut oil", percentage: 29, gram: 435 },
-      { ingredient: "Infuse coconut", percentage: null, gram: 635 },
-      { ingredient: "Olive oil", percentage: 34, gram: 510 },
-      { ingredient: "Sheabutter", percentage: 25, gram: 375 },
-      { ingredient: "Almond oil", percentage: 6, gram: 90 },
-      { ingredient: "Castor oil", percentage: 6, gram: 90 },
-      { ingredient: "Kumkumadi oil", percentage: 2, gram: 30 },
-      { ingredient: "NaOH", percentage: 33, gram: 209.69 },
-      { ingredient: "Goat milk", percentage: 2.03, gram: 425.74 },
-      { ingredient: "Salt", percentage: 1, gram: 15 },
-      { ingredient: "Sodium Lactate", percentage: 2, gram: 30 },
-      { ingredient: "Colour", percentage: 2, gram: 30 },
-      { ingredient: "Fragrance", percentage: 3, gram: 45 },
-      { ingredient: "Carrot/Beetroot", percentage: null, gram: 1 }
-    ]
-  },
-  {
-    id: "local-demo-2",
-    name: "Kumkumadi Water Soap",
-    labour: 250,
-    recipe: [
-      { ingredient: "Coconut oil", percentage: 29, gram: 435 },
-      { ingredient: "Infuse coconut", percentage: null, gram: 635 },
-      { ingredient: "Olive oil", percentage: 34, gram: 510 },
-      { ingredient: "Sheabutter", percentage: 25, gram: 375 },
-      { ingredient: "Almond oil", percentage: 6, gram: 90 },
-      { ingredient: "Castor oil", percentage: 6, gram: 90 },
-      { ingredient: "Kumkumadi oil", percentage: 2, gram: 30 },
-      { ingredient: "NaOH", percentage: 33, gram: 209.69 },
-      { ingredient: "Water", percentage: 2.03, gram: 425.74 },
-      { ingredient: "Salt", percentage: 1, gram: 15 },
-      { ingredient: "Sodium Lactate", percentage: 2, gram: 30 },
-      { ingredient: "Colour", percentage: 2, gram: 30 },
-      { ingredient: "Fragrance", percentage: 3, gram: 45 },
-      { ingredient: "Carrot/Beetroot", percentage: null, gram: 1 }
-    ]
-  }
+  
 ];
 
 // ERP Application State
@@ -429,6 +615,75 @@ let localState = {
 
 let isOfflineMode = false;
 let currentTheme = 'dark';
+let hasUnsavedChanges = false;
+
+function setUnsavedStatus(hasEdits) {
+  hasUnsavedChanges = hasEdits;
+  const unsavedDot = document.getElementById('unsavedDot');
+  const saveBtn = document.getElementById('saveBtn');
+  if (!unsavedDot || !saveBtn) return;
+  
+  if (hasEdits) {
+    unsavedDot.classList.remove('hidden');
+    saveBtn.classList.add('ring-2', 'ring-emerald-500/30');
+    
+    if (!isOfflineMode) {
+      setSyncStatus('online', 'Unsaved Changes Drafted');
+    } else {
+      setSyncStatus('error', 'Offline - Unsaved Draft');
+    }
+  } else {
+    unsavedDot.classList.add('hidden');
+    saveBtn.classList.remove('ring-2', 'ring-emerald-500/30');
+    
+    if (!isOfflineMode) {
+      setSyncStatus('online', 'Database Online & Synced');
+    } else {
+      setSyncStatus('error', 'Offline (Local Cache)');
+    }
+  }
+}
+
+// Premium Toast Notification System
+function showToast(message, type = 'success') {
+  const container = document.getElementById('toastContainer');
+  if (!container) return;
+
+  const toast = document.createElement('div');
+  toast.className = `pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl border shadow-xl transition-all duration-300 animate-toast-in text-xs font-semibold max-w-sm border-slate-250 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-850 dark:text-slate-100`;
+  
+  if (type === 'success') {
+    toast.className += ' !border-emerald-200 dark:!border-emerald-900/40 bg-gradient-to-r from-emerald-50/50 to-white dark:from-emerald-950/10 dark:to-slate-900 text-emerald-900 dark:text-emerald-300 shadow-emerald-500/5';
+  } else if (type === 'error') {
+    toast.className += ' !border-rose-200 dark:!border-rose-900/40 bg-gradient-to-r from-rose-50/50 to-white dark:from-rose-950/10 dark:to-slate-900 text-rose-900 dark:text-rose-300 shadow-rose-500/5';
+  } else {
+    toast.className += ' bg-gradient-to-r from-slate-550 to-white dark:from-slate-900/50 dark:to-slate-900 shadow-slate-500/5';
+  }
+
+  // Icons
+  const iconName = type === 'success' ? 'check-circle' : (type === 'error' ? 'alert-triangle' : 'info');
+  const iconColor = type === 'success' ? 'text-emerald-600 dark:text-emerald-400' : (type === 'error' ? 'text-rose-600 dark:text-rose-400' : 'text-slate-500');
+  
+  toast.innerHTML = `
+    <i data-lucide="${iconName}" class="w-4 h-4 flex-shrink-0 ${iconColor}"></i>
+    <span class="flex-1 tracking-tight">${message}</span>
+    <button onclick="this.parentElement.remove()" class="text-slate-400 hover:text-slate-600 dark:hover:text-white p-0.5 hover:bg-slate-100 dark:hover:bg-slate-850 rounded transition flex-shrink-0">
+      <i data-lucide="x" class="w-3.5 h-3.5"></i>
+    </button>
+  `;
+
+  container.appendChild(toast);
+  lucide.createIcons();
+
+  // Auto remove after 4.5 seconds
+  setTimeout(() => {
+    toast.classList.remove('animate-toast-in');
+    toast.classList.add('animate-toast-out');
+    toast.addEventListener('animationend', () => {
+      toast.remove();
+    });
+  }, 4500);
+}
 
 // Initial App Startup
 window.addEventListener('DOMContentLoaded', () => {
@@ -498,6 +753,13 @@ async function fetchAllData() {
         id,
         name,
         labour,
+        total_grams,
+        yield_mode,
+        yield_a,
+        yield_b,
+        weight_a,
+        weight_b,
+        slab_grams,
         created_at,
         recipe_ingredients (
           id,
@@ -514,6 +776,13 @@ async function fetchAllData() {
       id: soap.id,
       name: soap.name,
       labour: parseFloat(soap.labour) || 0,
+      totalGrams: parseFloat(soap.total_grams) || 1500.00,
+      yieldMode: soap.yield_mode || 'count',
+      yieldA: parseFloat(soap.yield_a) || 18.00,
+      yieldB: parseFloat(soap.yield_b) || 16.00,
+      weightA: parseFloat(soap.weight_a) || 90.00,
+      weightB: parseFloat(soap.weight_b) || 100.00,
+      slabGrams: parseFloat(soap.slab_grams) || 1500.00,
       recipe: soap.recipe_ingredients || []
     }));
 
@@ -845,7 +1114,13 @@ function filterRecipes() {
 
 // Select a Soap
 function selectSoap(id) {
+  if (hasUnsavedChanges) {
+    if (!confirm('You have unsaved changes. Are you sure you want to discard them and select a different recipe?')) {
+      return;
+    }
+  }
   localState.activeSoapId = id;
+  setUnsavedStatus(false);
   renderSidebarSoapList();
   renderActiveSoapWorkspace();
 }
@@ -866,6 +1141,24 @@ function renderActiveSoapWorkspace() {
   document.getElementById('activeSoapId').innerText = activeSoap.id;
   document.getElementById('activeSoapName').value = activeSoap.name;
   document.getElementById('activeSoapLabour').value = activeSoap.labour;
+  document.getElementById('activeSoapTotalGrams').value = activeSoap.totalGrams || 1500.00;
+
+  // Populate Yield sizer calculations and options
+  const yieldMode = activeSoap.yieldMode || 'count';
+  document.getElementById('yieldCalculationMode').value = yieldMode;
+  
+  if (yieldMode === 'count') {
+    document.getElementById('countModePanel').classList.remove('hidden');
+    document.getElementById('weightModePanel').classList.add('hidden');
+    document.getElementById('batchYieldA').value = activeSoap.yieldA || 18.00;
+    document.getElementById('batchYieldB').value = activeSoap.yieldB || 16.00;
+  } else {
+    document.getElementById('countModePanel').classList.add('hidden');
+    document.getElementById('weightModePanel').classList.remove('hidden');
+    document.getElementById('calcSlabGrams').value = activeSoap.slabGrams || 1500.00;
+    document.getElementById('weightA').value = activeSoap.weightA || 90.00;
+    document.getElementById('weightB').value = activeSoap.weightB || 100.00;
+  }
 
   // Build Ingredient costing table rows
   const tableBody = document.getElementById('recipeTableBody');
@@ -944,26 +1237,81 @@ function recalculateCostings() {
   
   const labour = parseFloat(activeSoap.labour) || 0;
   const production = materialCost + labour;
+  const profit30 = production * 1.30;
   const profit40 = production * 1.40;
 
   // Update central workspace KPI numbers
   document.getElementById('kpiMaterial').innerText = `₹${materialCost.toFixed(2)}`;
   document.getElementById('kpiLabour').innerText = `₹${labour.toFixed(2)}`;
   document.getElementById('kpiTotalCost').innerText = `₹${production.toFixed(2)}`;
+  document.getElementById('kpi30Profit').innerText = `₹${profit30.toFixed(2)}`;
   document.getElementById('kpi40Profit').innerText = `₹${profit40.toFixed(2)}`;
 
   document.getElementById('totalWeightVal').innerText = `${totalWeight.toFixed(2)}g`;
   document.getElementById('totalCostVal').innerText = `₹${materialCost.toFixed(2)}`;
 
   // Populate Interactive Profit/Margin Scenario Sizer
-  const yieldA = parseInt(document.getElementById('batchYieldA').value) || 18;
-  const yieldB = parseInt(document.getElementById('batchYieldB').value) || 16;
+  const yieldMode = activeSoap.yieldMode || 'count';
+  
+  let yieldA = 18;
+  let yieldB = 16;
+  let weightA = activeSoap.weightA || 90.00;
+  let weightB = activeSoap.weightB || 100.00;
+  let wastageGramsA = 0;
+  let wastageGramsB = 0;
+  let wastagePctA = 0;
+  let wastagePctB = 0;
 
-  const unitCostA = production / yieldA;
-  const unitCostB = production / yieldB;
+  if (yieldMode === 'count') {
+    yieldA = parseInt(document.getElementById('batchYieldA').value) || 18;
+    yieldB = parseInt(document.getElementById('batchYieldB').value) || 16;
+  } else {
+    const slabGrams = parseFloat(activeSoap.slabGrams) || 1500.00;
+    weightA = parseFloat(document.getElementById('weightA').value) || 90.00;
+    weightB = parseFloat(document.getElementById('weightB').value) || 100.00;
+    
+    yieldA = Math.floor(slabGrams / weightA) || 0;
+    yieldB = Math.floor(slabGrams / weightB) || 0;
+    
+    if (yieldA > 0) {
+      wastageGramsA = slabGrams - (yieldA * weightA);
+      wastagePctA = (wastageGramsA / slabGrams) * 100;
+    } else {
+      wastageGramsA = slabGrams;
+      wastagePctA = slabGrams > 0 ? 100 : 0;
+    }
+    
+    if (yieldB > 0) {
+      wastageGramsB = slabGrams - (yieldB * weightB);
+      wastagePctB = (wastageGramsB / slabGrams) * 100;
+    } else {
+      wastageGramsB = slabGrams;
+      wastagePctB = slabGrams > 0 ? 100 : 0;
+    }
+  }
+
+  // Update dynamic yield and wastage sub-cards elements
+  document.getElementById('calculatedYieldA').innerText = `${yieldA} Bars`;
+  document.getElementById('calculatedWastageA').innerText = `${wastageGramsA.toFixed(2)}g (${wastagePctA.toFixed(1)}%)`;
+  document.getElementById('calculatedYieldB').innerText = `${yieldB} Bars`;
+  document.getElementById('calculatedWastageB').innerText = `${wastageGramsB.toFixed(2)}g (${wastagePctB.toFixed(1)}%)`;
+
+  const unitCostA = yieldA > 0 ? (production / yieldA) : 0;
+  const unitCostB = yieldB > 0 ? (production / yieldB) : 0;
 
   document.getElementById('unitCostA').innerText = `₹${unitCostA.toFixed(2)}`;
   document.getElementById('unitCostB').innerText = `₹${unitCostB.toFixed(2)}`;
+
+  const price30PerSoapA = yieldA > 0 ? (profit30 / yieldA) : 0;
+  const price40PerSoapA = yieldA > 0 ? (profit40 / yieldA) : 0;
+
+  if (yieldMode === 'count') {
+    document.getElementById('kpi30YieldDetails').innerText = `Y${yieldA}: ₹${price30PerSoapA.toFixed(2)}`;
+    document.getElementById('kpi40YieldDetails').innerText = `Y${yieldA}: ₹${price40PerSoapA.toFixed(2)}`;
+  } else {
+    document.getElementById('kpi30YieldDetails').innerText = `W${weightA}g: ₹${price30PerSoapA.toFixed(2)}`;
+    document.getElementById('kpi40YieldDetails').innerText = `W${weightA}g: ₹${price40PerSoapA.toFixed(2)}`;
+  }
 
   // Build high-density Margin rows (10% -> 100%)
   const profitRowsContainer = document.getElementById('profitRowsContainer');
@@ -974,8 +1322,8 @@ function recalculateCostings() {
     const profitAmount = totalSellingPrice - production;
     const profitRatio = (profitAmount / totalSellingPrice) * 100;
 
-    const pricePerSoapA = totalSellingPrice / yieldA;
-    const pricePerSoapB = totalSellingPrice / yieldB;
+    const pricePerSoapA = yieldA > 0 ? (totalSellingPrice / yieldA) : 0;
+    const pricePerSoapB = yieldB > 0 ? (totalSellingPrice / yieldB) : 0;
 
     // Dynamic high-fidelity margin bands styling
     let badgeStyle = '';
@@ -1030,11 +1378,25 @@ function recalculateCostings() {
 
 // Add New Soap recipe
 async function createNewSoap() {
+  if (hasUnsavedChanges) {
+    if (!confirm('You have unsaved changes. Are you sure you want to discard them and create a new recipe?')) {
+      return;
+    }
+  }
+  setUnsavedStatus(false);
+
   if (isOfflineMode) {
     const newSoap = {
       id: 'local-' + Date.now(),
       name: 'New Soap Recipe',
       labour: 250.00,
+      totalGrams: 1500.00,
+      yieldMode: 'count',
+      yieldA: 18.00,
+      yieldB: 16.00,
+      weightA: 90.00,
+      weightB: 100.00,
+      slabGrams: 1500.00,
       recipe: [{
         id: 'local-item-' + Math.random().toString(36).substr(2, 9),
         ingredient: 'Coconut oil',
@@ -1056,7 +1418,14 @@ async function createNewSoap() {
       .from('soaps')
       .insert({
         name: 'New Soap Recipe',
-        labour: 250.00
+        labour: 250.00,
+        total_grams: 1500.00,
+        yield_mode: 'count',
+        yield_a: 18.00,
+        yield_b: 16.00,
+        weight_a: 90.00,
+        weight_b: 100.00,
+        slab_grams: 1500.00
       })
       .select()
       .single();
@@ -1080,6 +1449,13 @@ async function createNewSoap() {
       id: newSoap.id,
       name: newSoap.name,
       labour: 250.00,
+      totalGrams: 1500.00,
+      yieldMode: 'count',
+      yieldA: 18.00,
+      yieldB: 16.00,
+      weightA: 90.00,
+      weightB: 100.00,
+      slabGrams: 1500.00,
       recipe: [{
         id: newRow.id,
         ingredient: 'Coconut oil',
@@ -1102,6 +1478,13 @@ async function createNewSoap() {
 
 // Clone Soap recipe
 async function cloneSoap(soapId) {
+  if (hasUnsavedChanges) {
+    if (!confirm('You have unsaved changes. Are you sure you want to discard them and clone this recipe?')) {
+      return;
+    }
+  }
+  setUnsavedStatus(false);
+
   const soap = localState.soaps.find(s => s.id === soapId);
   if (!soap) return;
 
@@ -1110,6 +1493,13 @@ async function cloneSoap(soapId) {
       id: 'local-' + Date.now(),
       name: `${soap.name} (Copy)`,
       labour: soap.labour,
+      totalGrams: soap.totalGrams || 1500.00,
+      yieldMode: soap.yieldMode || 'count',
+      yieldA: soap.yieldA || 18.00,
+      yieldB: soap.yieldB || 16.00,
+      weightA: soap.weightA || 90.00,
+      weightB: soap.weightB || 100.00,
+      slabGrams: soap.slabGrams || 1500.00,
       recipe: JSON.parse(JSON.stringify(soap.recipe))
     };
     clonedSoap.recipe.forEach(item => {
@@ -1129,7 +1519,14 @@ async function cloneSoap(soapId) {
       .from('soaps')
       .insert({
         name: `${soap.name} (Copy)`,
-        labour: soap.labour
+        labour: soap.labour,
+        total_grams: soap.totalGrams || 1500.00,
+        yield_mode: soap.yieldMode || 'count',
+        yield_a: soap.yieldA || 18.00,
+        yield_b: soap.yieldB || 16.00,
+        weight_a: soap.weightA || 90.00,
+        weight_b: soap.weightB || 100.00,
+        slab_grams: soap.slabGrams || 1500.00
       })
       .select()
       .single();
@@ -1166,6 +1563,11 @@ async function cloneSoap(soapId) {
 async function deleteSoap(soapId) {
   if (!confirm('Are you absolutely sure you want to delete this soap recipe? This action is permanent.')) return;
 
+  const activeSoap = localState.soaps.find(s => s.id === localState.activeSoapId);
+  if (activeSoap && activeSoap.id === soapId) {
+    setUnsavedStatus(false);
+  }
+
   if (isOfflineMode) {
     localState.soaps = localState.soaps.filter(s => s.id !== soapId);
     if (localState.activeSoapId === soapId) {
@@ -1201,35 +1603,17 @@ async function deleteSoap(soapId) {
 }
 
 // Update Active Soap Name
-async function updateActiveSoapName(newName) {
+function updateActiveSoapName(newName) {
   const activeSoap = localState.soaps.find(s => s.id === localState.activeSoapId);
   if (!activeSoap || activeSoap.name === newName) return;
 
   activeSoap.name = newName;
   renderSidebarSoapList();
-
-  if (isOfflineMode) {
-    saveLocalState();
-    return;
-  }
-
-  setSyncStatus('syncing', 'Saving name changes...');
-  try {
-    const { error } = await supabaseClient
-      .from('soaps')
-      .update({ name: newName })
-      .eq('id', activeSoap.id);
-
-    if (error) throw error;
-    setSyncStatus('online', 'Name updated in Cloud');
-  } catch (error) {
-    console.error(error);
-    setSyncStatus('error', 'Save Failed: ' + error.message);
-  }
+  setUnsavedStatus(true);
 }
 
 // Update Active Soap Labor Cost
-async function updateActiveSoapLabour(newLabourVal) {
+function updateActiveSoapLabour(newLabourVal) {
   const activeSoap = localState.soaps.find(s => s.id === localState.activeSoapId);
   if (!activeSoap) return;
 
@@ -1238,78 +1622,127 @@ async function updateActiveSoapLabour(newLabourVal) {
 
   activeSoap.labour = labour;
   recalculateCostings();
-
-  if (isOfflineMode) {
-    saveLocalState();
-    return;
-  }
-
-  setSyncStatus('syncing', 'Saving labor cost changes...');
-  try {
-    const { error } = await supabaseClient
-      .from('soaps')
-      .update({ labour: labour })
-      .eq('id', activeSoap.id);
-
-    if (error) throw error;
-    setSyncStatus('online', 'Labor cost updated in Cloud');
-  } catch (error) {
-    console.error(error);
-    setSyncStatus('error', 'Save Failed: ' + error.message);
-  }
+  setUnsavedStatus(true);
 }
 
-// Add empty ingredient costing row
-async function addRecipeRow() {
+// Update Active Soap Total Batch Weight & auto-scale ingredients
+function updateActiveSoapTotalGrams(newWeightVal) {
+  const activeSoap = localState.soaps.find(s => s.id === localState.activeSoapId);
+  if (!activeSoap) return;
+
+  const totalGrams = parseFloat(newWeightVal) || 1500.00;
+  if (activeSoap.totalGrams === totalGrams) return;
+
+  activeSoap.totalGrams = totalGrams;
+
+  // Auto-scale all ingredients that have a percentage ratio
+  activeSoap.recipe.forEach(item => {
+    if (item.percentage !== null && item.percentage !== undefined && item.percentage !== '') {
+      item.gram = parseFloat((totalGrams * (parseFloat(item.percentage) / 100)).toFixed(2)) || 0;
+    }
+  });
+
+  recalculateCostings();
+  renderActiveSoapWorkspace();
+  setUnsavedStatus(true);
+}
+
+// Update Active Soap Yield Calculation Mode
+function updateActiveSoapYieldMode(newMode) {
+  const activeSoap = localState.soaps.find(s => s.id === localState.activeSoapId);
+  if (!activeSoap || activeSoap.yieldMode === newMode) return;
+
+  activeSoap.yieldMode = newMode;
+  recalculateCostings();
+  renderActiveSoapWorkspace();
+  setUnsavedStatus(true);
+}
+
+// Update Active Soap Cured Slab Weight
+function updateActiveSoapSlabGrams(newSlabVal) {
+  const activeSoap = localState.soaps.find(s => s.id === localState.activeSoapId);
+  if (!activeSoap) return;
+
+  const slabGrams = parseFloat(newSlabVal) || 1500.00;
+  if (activeSoap.slabGrams === slabGrams) return;
+
+  activeSoap.slabGrams = slabGrams;
+  recalculateCostings();
+  setUnsavedStatus(true);
+}
+
+// Update Active Soap Yield Option A Count
+function updateActiveSoapYieldA(newVal) {
+  const activeSoap = localState.soaps.find(s => s.id === localState.activeSoapId);
+  if (!activeSoap) return;
+
+  const yieldA = parseFloat(newVal) || 18.00;
+  if (activeSoap.yieldA === yieldA) return;
+
+  activeSoap.yieldA = yieldA;
+  recalculateCostings();
+  setUnsavedStatus(true);
+}
+
+// Update Active Soap Yield Option B Count
+function updateActiveSoapYieldB(newVal) {
+  const activeSoap = localState.soaps.find(s => s.id === localState.activeSoapId);
+  if (!activeSoap) return;
+
+  const yieldB = parseFloat(newVal) || 16.00;
+  if (activeSoap.yieldB === yieldB) return;
+
+  activeSoap.yieldB = yieldB;
+  recalculateCostings();
+  setUnsavedStatus(true);
+}
+
+// Update Active Soap Weight Option A
+function updateActiveSoapWeightA(newVal) {
+  const activeSoap = localState.soaps.find(s => s.id === localState.activeSoapId);
+  if (!activeSoap) return;
+
+  const weightA = parseFloat(newVal) || 90.00;
+  if (activeSoap.weightA === weightA) return;
+
+  activeSoap.weightA = weightA;
+  recalculateCostings();
+  setUnsavedStatus(true);
+}
+
+// Update Active Soap Weight Option B
+function updateActiveSoapWeightB(newVal) {
+  const activeSoap = localState.soaps.find(s => s.id === localState.activeSoapId);
+  if (!activeSoap) return;
+
+  const weightB = parseFloat(newVal) || 100.00;
+  if (activeSoap.weightB === weightB) return;
+
+  activeSoap.weightB = weightB;
+  recalculateCostings();
+  setUnsavedStatus(true);
+}
+
+// Add empty ingredient costing row in memory
+function addRecipeRow() {
   const activeSoap = localState.soaps.find(s => s.id === localState.activeSoapId);
   if (!activeSoap) return;
 
   const defaultIngredient = Object.keys(localState.masterIngredients)[0] || 'Water';
 
-  if (isOfflineMode) {
-    const newItem = {
-      id: 'local-item-' + Math.random().toString(36).substr(2, 9),
-      ingredient: defaultIngredient,
-      percentage: 0,
-      gram: 0
-    };
-    activeSoap.recipe.push(newItem);
-    saveLocalState();
-    renderActiveSoapWorkspace();
-    return;
-  }
-
-  setSyncStatus('syncing', 'Adding recipe row in Cloud...');
-  try {
-    const { data: newRow, error } = await supabaseClient
-      .from('recipe_ingredients')
-      .insert({
-        soap_id: activeSoap.id,
-        ingredient: defaultIngredient,
-        percentage: 0,
-        gram: 0
-      })
-      .select()
-      .single();
-
-    if (error) throw error;
-
-    activeSoap.recipe.push({
-      id: newRow.id,
-      ingredient: defaultIngredient,
-      percentage: 0,
-      gram: 0
-    });
-
-    renderActiveSoapWorkspace();
-    setSyncStatus('online', 'Added recipe item in Cloud');
-  } catch (error) {
-    console.error(error);
-    setSyncStatus('error', 'Add Item Failed: ' + error.message);
-  }
+  const newItem = {
+    id: 'temp-' + Math.random().toString(36).substr(2, 9),
+    ingredient: defaultIngredient,
+    percentage: 0,
+    gram: 0
+  };
+  
+  activeSoap.recipe.push(newItem);
+  renderActiveSoapWorkspace();
+  setUnsavedStatus(true);
 }
 
-// Update existing Recipe Ingredient row parameters
+// Update existing Recipe Ingredient row parameters in memory
 async function updateRecipeItem(index, field, value) {
   const activeSoap = localState.soaps.find(s => s.id === localState.activeSoapId);
   if (!activeSoap) return;
@@ -1356,64 +1789,156 @@ async function updateRecipeItem(index, field, value) {
         saveLocalState();
       }
       renderMasterDatalist();
-      renderMasterRatesList();
+      renderModalMaterials();
     }
     updatedValue = trimmedVal;
   }
 
+  // Update field value
   item[field] = updatedValue;
+
+  // Handle Two-way Binding between % Ratio and Grams
+  const totalGrams = activeSoap.totalGrams || 1500.00;
+  if (field === 'percentage') {
+    if (item.percentage !== null && item.percentage !== undefined && item.percentage !== '') {
+      item.gram = parseFloat((totalGrams * (item.percentage / 100)).toFixed(2)) || 0;
+    }
+  } else if (field === 'gram') {
+    if (item.percentage !== null && item.percentage !== undefined && item.percentage !== '') {
+      item.percentage = parseFloat(((item.gram / totalGrams) * 100).toFixed(2)) || 0;
+    }
+  }
+
   recalculateCostings();
-
-  if (isOfflineMode) {
-    saveLocalState();
-    return;
-  }
-
-  setSyncStatus('syncing', 'Syncing changes to Cloud...');
-  try {
-    const { error } = await supabaseClient
-      .from('recipe_ingredients')
-      .update({ [field]: updatedValue })
-      .eq('id', item.id);
-
-    if (error) throw error;
-    setSyncStatus('online', 'Ingredients matrix updated');
-  } catch (error) {
-    console.error(error);
-    setSyncStatus('error', 'Sync Failed: ' + error.message);
-  }
+  renderActiveSoapWorkspace();
+  setUnsavedStatus(true);
 }
 
-// Delete Recipe ingredient row
-async function deleteRecipeRow(index) {
+// Delete Recipe ingredient row from memory
+function deleteRecipeRow(index) {
   const activeSoap = localState.soaps.find(s => s.id === localState.activeSoapId);
   if (!activeSoap) return;
 
   const item = activeSoap.recipe[index];
   if (!item) return;
 
+  if (!confirm(`Are you sure you want to remove "${item.ingredient || 'this ingredient'}" from the recipe?`)) return;
+
+  activeSoap.recipe.splice(index, 1);
+  renderActiveSoapWorkspace();
+  setUnsavedStatus(true);
+}
+
+// Save Active Soap changes (Cloud Supabase / Offline LocalStorage)
+async function saveActiveSoap() {
+  const activeSoap = localState.soaps.find(s => s.id === localState.activeSoapId);
+  if (!activeSoap) return;
+
+  setSyncStatus('syncing', `Saving recipe changes for "${activeSoap.name}"...`);
+
   if (isOfflineMode) {
-    activeSoap.recipe.splice(index, 1);
     saveLocalState();
-    renderActiveSoapWorkspace();
+    setUnsavedStatus(false);
+    showToast(`Recipe "${activeSoap.name}" saved locally successfully!`, 'success');
     return;
   }
 
-  setSyncStatus('syncing', 'Removing item from Cloud...');
   try {
-    const { error } = await supabaseClient
+    // 1. Update soap record in 'soaps' table
+    const { error: soapError } = await supabaseClient
+      .from('soaps')
+      .update({
+        name: activeSoap.name,
+        labour: activeSoap.labour,
+        total_grams: activeSoap.totalGrams,
+        yield_mode: activeSoap.yieldMode,
+        yield_a: activeSoap.yieldA,
+        yield_b: activeSoap.yieldB,
+        weight_a: activeSoap.weightA,
+        weight_b: activeSoap.weightB,
+        slab_grams: activeSoap.slabGrams
+      })
+      .eq('id', activeSoap.id);
+
+    if (soapError) throw soapError;
+
+    // 2. Synchronize recipe ingredients (Delete-then-Insert transactional batch sync)
+    const { error: deleteError } = await supabaseClient
       .from('recipe_ingredients')
       .delete()
-      .eq('id', item.id);
+      .eq('soap_id', activeSoap.id);
 
-    if (error) throw error;
+    if (deleteError) throw deleteError;
 
-    activeSoap.recipe.splice(index, 1);
+    if (activeSoap.recipe.length > 0) {
+      const dbRecipeRows = activeSoap.recipe.map(item => ({
+        soap_id: activeSoap.id,
+        ingredient: item.ingredient,
+        percentage: item.percentage,
+        gram: item.gram
+      }));
+
+      const { data: insertedRows, error: insertError } = await supabaseClient
+        .from('recipe_ingredients')
+        .insert(dbRecipeRows)
+        .select();
+
+      if (insertError) throw insertError;
+
+      // Re-assign newly generated database IDs back to memory array
+      if (insertedRows && insertedRows.length === activeSoap.recipe.length) {
+        activeSoap.recipe.forEach((item, idx) => {
+          item.id = insertedRows[idx].id;
+        });
+      } else {
+        // Fallback: force fetch to ensure IDs align perfectly
+        await fetchAllData();
+      }
+    }
+
+    saveLocalState();
+    setUnsavedStatus(false);
+    renderSidebarSoapList();
     renderActiveSoapWorkspace();
-    setSyncStatus('online', 'Row removed successfully');
+    showToast(`Recipe "${activeSoap.name}" saved successfully to Cloud!`, 'success');
   } catch (error) {
     console.error(error);
-    setSyncStatus('error', 'Remove Failed: ' + error.message);
+    setSyncStatus('error', 'Save Recipe Failed: ' + error.message);
+    showToast('Failed to save recipe: ' + error.message, 'error');
+  }
+}
+
+// Reset Active Soap changes (Reload from database or local storage cache)
+async function resetActiveSoap() {
+  const activeSoap = localState.soaps.find(s => s.id === localState.activeSoapId);
+  if (!activeSoap) return;
+
+  if (!confirm(`Are you sure you want to discard all unsaved edits and reset "${activeSoap.name}" to the last saved database state?`)) {
+    return;
+  }
+
+  setSyncStatus('syncing', 'Discarding changes and reloading...');
+
+  if (isOfflineMode) {
+    const cachedSoaps = localStorage.getItem('soapERP_soaps');
+    if (cachedSoaps) {
+      localState.soaps = JSON.parse(cachedSoaps);
+    }
+    setUnsavedStatus(false);
+    renderSidebarSoapList();
+    renderActiveSoapWorkspace();
+    showToast(`Recipe "${activeSoap.name}" successfully reset to last saved local state`, 'success');
+    return;
+  }
+
+  try {
+    await fetchAllData();
+    setUnsavedStatus(false);
+    showToast(`Recipe "${activeSoap.name}" successfully reset to last saved state`, 'success');
+  } catch (error) {
+    console.error(error);
+    setSyncStatus('error', 'Reset Failed: ' + error.message);
+    showToast('Failed to reset: ' + error.message, 'error');
   }
 }
 

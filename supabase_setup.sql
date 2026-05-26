@@ -22,6 +22,13 @@ create table soaps (
     id uuid default gen_random_uuid() primary key,
     name text not null,
     labour numeric not null default 250.00,
+    total_grams numeric not null default 1500.00,
+    yield_mode text not null default 'count',
+    yield_a numeric not null default 18.00,
+    yield_b numeric not null default 16.00,
+    weight_a numeric not null default 90.00,
+    weight_b numeric not null default 100.00,
+    slab_grams numeric not null default 1500.00,
     created_at timestamptz default now()
 );
 
