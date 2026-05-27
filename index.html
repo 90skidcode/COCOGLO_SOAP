@@ -354,77 +354,78 @@ tailwind.config = {
       <!-- LEFT COLUMN: Recipe Sheet Editor (60% Width) -->
       <section id="leftRecipeSheet" class="flex-1 flex flex-col bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-850 rounded-xl overflow-hidden backdrop-blur-md">
         
+        <!-- Outer scroll wrapper for mobile, normal flex container on desktop -->
+        <div class="flex-1 overflow-y-auto lg:overflow-visible lg:flex lg:flex-col scrollbar-hide flex flex-col">
+        
         <!-- Recipe General Header Info -->
         <div class="p-3 border-b border-slate-200 dark:border-slate-800/80 bg-slate-50 dark:bg-slate-900/40 flex flex-wrap items-center justify-between gap-3">
           <div class="flex-1 min-w-[200px]">
             <input type="text" id="activeSoapName" onchange="updateActiveSoapName(this.value)" class="text-base font-bold bg-transparent border-none border-b border-transparent hover:border-slate-300 dark:hover:border-slate-700 focus:border-violet-500 focus:outline-none w-full text-slate-850 dark:text-slate-100 py-0.5" placeholder="Soap Formula Name..." />
-            <p class="text-[10px] text-slate-450 dark:text-slate-550 font-semibold mt-0.5 uppercase tracking-wide">Database ID: <span id="activeSoapId" class="font-mono text-slate-600 dark:text-slate-400">Loading...</span></p>
+            <p class="hidden">Database ID: <span id="activeSoapId">Loading...</span></p>
           </div>
           
-          <div class="flex items-center gap-3">
+          <div class="grid grid-cols-2 gap-2.5 w-full sm:flex sm:flex-row sm:items-center sm:gap-3 sm:w-auto">
             <!-- Batch Weight (g) formulation sizer -->
-            <div class="flex items-center gap-2">
-              <label for="activeSoapTotalGrams" class="text-xs text-slate-500 dark:text-slate-400 font-semibold whitespace-nowrap">Batch Weight:</label>
-              <div class="relative w-28">
-                <input type="number" step="any" min="1" id="activeSoapTotalGrams" onchange="updateActiveSoapTotalGrams(this.value)" class="w-full pl-2 pr-6 py-1 text-xs rounded bg-white border border-slate-250 dark:bg-slate-800 dark:border-slate-700 font-bold text-slate-800 dark:text-slate-100 shadow-sm" />
-                <span class="absolute inset-y-0 right-2 flex items-center text-slate-400 dark:text-slate-550 text-[10px] font-bold">g</span>
+            <div class="flex flex-col gap-1 w-full sm:flex-row sm:items-center sm:gap-2 sm:w-auto">
+              <label for="activeSoapTotalGrams" class="text-[9px] sm:text-xs text-slate-500 dark:text-slate-400 font-bold sm:font-semibold uppercase sm:normal-case tracking-wider sm:tracking-normal whitespace-nowrap">Batch Weight</label>
+              <div class="relative w-full sm:w-28">
+                <input type="number" step="any" min="1" id="activeSoapTotalGrams" onchange="updateActiveSoapTotalGrams(this.value)" class="w-full pl-2.5 pr-6 py-1.5 sm:py-1 text-xs rounded bg-slate-50 border border-slate-250 dark:bg-slate-800 dark:border-slate-700 font-bold text-slate-850 dark:text-slate-100 shadow-sm focus:bg-white focus:outline-none" />
+                <span class="absolute inset-y-0 right-2.5 flex items-center text-slate-400 dark:text-slate-555 text-[10px] font-bold">g</span>
               </div>
             </div>
 
             <!-- Labor Cost -->
-            <div class="flex items-center gap-2">
-              <label for="activeSoapLabour" class="text-xs text-slate-550 dark:text-slate-400 font-semibold whitespace-nowrap">Labor Cost:</label>
-              <div class="relative w-24">
-                <span class="absolute inset-y-0 left-0 pl-2 flex items-center text-slate-400 dark:text-slate-555 text-xs">₹</span>
-                <input type="number" step="1" min="0" id="activeSoapLabour" onchange="updateActiveSoapLabour(this.value)" class="w-full pl-5 pr-2 py-1 text-xs rounded bg-white border border-slate-250 dark:bg-slate-800 dark:border-slate-700 font-bold text-slate-800 dark:text-slate-100" />
+            <div class="flex flex-col gap-1 w-full sm:flex-row sm:items-center sm:gap-2 sm:w-auto">
+              <label for="activeSoapLabour" class="text-[9px] sm:text-xs text-slate-550 dark:text-slate-400 font-bold sm:font-semibold uppercase sm:normal-case tracking-wider sm:tracking-normal whitespace-nowrap">Labor Cost</label>
+              <div class="relative w-full sm:w-24">
+                <span class="absolute inset-y-0 left-0 pl-2.5 flex items-center text-slate-400 dark:text-slate-555 text-xs">₹</span>
+                <input type="number" step="1" min="0" id="activeSoapLabour" onchange="updateActiveSoapLabour(this.value)" class="w-full pl-5 pr-2 py-1.5 sm:py-1 text-xs rounded bg-slate-50 border border-slate-250 dark:bg-slate-800 dark:border-slate-700 font-bold text-slate-850 dark:text-slate-100 shadow-sm focus:bg-white focus:outline-none" />
               </div>
             </div>
 
             <!-- Save & Reset Action Buttons -->
-            <div class="flex items-center gap-1.5 ml-2 border-l border-slate-200 dark:border-slate-850 pl-3">
-              <button onclick="saveActiveSoap()" id="saveBtn" class="bg-emerald-600 hover:bg-emerald-500 active:scale-[0.98] text-white transition-all rounded-md px-2.5 py-1.5 text-xs font-semibold flex items-center gap-1 shadow-sm border border-transparent relative" title="Save Recipe Changes to Database">
+            <div class="flex items-center gap-1.5 ml-0 sm:ml-2 border-t sm:border-t-0 sm:border-l border-slate-200 dark:border-slate-850 pt-2.5 sm:pt-0 pl-0 sm:pl-3 w-full sm:w-auto justify-end col-span-2">
+              <button onclick="saveActiveSoap()" id="saveBtn" class="flex-1 sm:flex-initial bg-emerald-600 hover:bg-emerald-500 active:scale-[0.98] text-white transition-all rounded-md px-2.5 py-1.5 text-xs font-semibold flex items-center justify-center gap-1 shadow-sm border border-transparent relative" title="Save Recipe Changes to Database">
                 <i data-lucide="save" class="w-3.5 h-3.5"></i>
-                <span class="hidden md:inline">Save</span>
+                <span>Save</span>
                 <span id="unsavedDot" class="hidden absolute -top-1 -right-1 w-2.5 h-2.5 bg-rose-500 border-2 border-white dark:border-slate-900 rounded-full animate-pulse shadow-md"></span>
               </button>
-              <button onclick="resetActiveSoap()" class="bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 active:scale-[0.98] text-slate-700 dark:text-slate-200 transition-all rounded-md px-2.5 py-1.5 text-xs font-semibold flex items-center gap-1 border border-slate-250 dark:border-slate-700" title="Discard unsaved edits and reload from database">
+              <button onclick="resetActiveSoap()" class="flex-1 sm:flex-initial bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 active:scale-[0.98] text-slate-700 dark:text-slate-200 transition-all rounded-md px-2.5 py-1.5 text-xs font-semibold flex items-center justify-center gap-1 border border-slate-250 dark:border-slate-700" title="Discard unsaved edits and reload from database">
                 <i data-lucide="rotate-ccw" class="w-3.5 h-3.5 text-amber-500"></i>
-                <span class="hidden md:inline">Reset</span>
+                <span>Reset</span>
               </button>
             </div>
           </div>
-        </div>
-
-        <!-- Real-Time Pricing Summary Banner (Compact KPIs) -->
-        <div class="grid grid-cols-5 border-b border-slate-200 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-900/20 text-center">
-          <div class="p-2 border-r border-slate-200 dark:border-slate-800/80 flex flex-col justify-center">
-            <span class="block text-[9px] text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold">Material Cost</span>
+        </div>        <!-- Real-Time Pricing Summary Banner (Compact KPIs) -->
+        <div class="grid grid-cols-2 md:grid-cols-5 border-b border-slate-200 dark:border-slate-800/80 bg-slate-200/50 dark:bg-slate-900/20 gap-px overflow-hidden text-center flex-shrink-0">
+          <div class="p-2 flex flex-col justify-center bg-white dark:bg-slate-900/40 col-span-1">
+            <span class="block text-[8px] sm:text-[9px] text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold truncate">Material Cost</span>
             <span id="kpiMaterial" class="text-xs sm:text-sm font-extrabold text-violet-600 dark:text-violet-400">₹0.00</span>
           </div>
-          <div class="p-2 border-r border-slate-200 dark:border-slate-800/80 flex flex-col justify-center">
-            <span class="block text-[9px] text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold">Labour Cost</span>
+          <div class="p-2 flex flex-col justify-center bg-white dark:bg-slate-900/40 col-span-1">
+            <span class="block text-[8px] sm:text-[9px] text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold truncate">Labour Cost</span>
             <span id="kpiLabour" class="text-xs sm:text-sm font-extrabold text-indigo-600 dark:text-indigo-400">₹0.00</span>
           </div>
-          <div class="p-2 border-r border-slate-200 dark:border-slate-800/80 flex flex-col justify-center">
-            <span class="block text-[9px] text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold">Total Production</span>
+          <div class="p-2 flex flex-col justify-center bg-white dark:bg-slate-900/40 col-span-2 md:col-span-1 border-t border-b md:border-t-0 md:border-b-0 border-slate-100 dark:border-slate-800/40">
+            <span class="block text-[8px] sm:text-[9px] text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold truncate">Total Cost</span>
             <span id="kpiTotalCost" class="text-xs sm:text-sm font-extrabold text-emerald-600 dark:text-emerald-400">₹0.00</span>
           </div>
-          <div class="p-2 border-r border-slate-200 dark:border-slate-800/80 bg-indigo-600/10 flex flex-col justify-center">
-            <span class="block text-[9px] text-indigo-600 dark:text-indigo-400 uppercase tracking-wider font-semibold">30% Profit Price</span>
+          <div class="p-2 bg-indigo-650/10 dark:bg-indigo-600/10 flex flex-col justify-center col-span-1">
+            <span class="block text-[8px] sm:text-[9px] text-indigo-600 dark:text-indigo-450 uppercase tracking-wider font-semibold truncate">30% Profit</span>
             <span id="kpi30Profit" class="text-xs sm:text-sm font-extrabold text-indigo-850 dark:text-indigo-300">₹0.00</span>
             <span id="kpi30YieldDetails" class="block text-[8px] sm:text-[9px] text-indigo-700 dark:text-indigo-400 font-bold mt-0.5">Y18: ₹0.00</span>
           </div>
-          <div class="p-2 bg-violet-600/10 flex flex-col justify-center">
-            <span class="block text-[9px] text-violet-600 dark:text-violet-400 uppercase tracking-wider font-semibold">40% Profit Price</span>
+          <div class="p-2 bg-violet-650/10 dark:bg-violet-600/10 flex flex-col justify-center col-span-1">
+            <span class="block text-[8px] sm:text-[9px] text-violet-600 dark:text-violet-455 uppercase tracking-wider font-semibold truncate">40% Profit</span>
             <span id="kpi40Profit" class="text-xs sm:text-sm font-extrabold text-violet-750 dark:text-violet-300">₹0.00</span>
             <span id="kpi40YieldDetails" class="block text-[8px] sm:text-[9px] text-violet-700 dark:text-violet-400 font-bold mt-0.5">Y18: ₹0.00</span>
           </div>
         </div>
 
         <!-- High-Density Costing Spreadsheet Grid -->
-        <div class="flex-1 overflow-y-auto scrollbar-hide">
-          <table class="w-full text-left border-collapse">
-            <thead class="sticky top-0 bg-slate-100 dark:bg-slate-900 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider border-b border-slate-200 dark:border-slate-800 z-10">
+        <div class="flex-grow overflow-visible lg:overflow-y-auto lg:scrollbar-hide">
+          <table class="w-full text-left border-collapse block md:table">
+            <thead class="hidden md:table-header-group sticky top-0 bg-slate-100 dark:bg-slate-900 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider border-b border-slate-200 dark:border-slate-800 z-10">
               <tr>
                 <th class="py-2 px-3 w-5/12">Ingredient</th>
                 <th class="py-2 px-3 w-2/12 text-center">% Ratio</th>
@@ -434,138 +435,165 @@ tailwind.config = {
                 <th class="py-2 px-2 w-10 text-center"></th>
               </tr>
             </thead>
-            <tbody id="recipeTableBody" class="divide-y divide-slate-200 dark:divide-slate-850 text-xs">
+            <tbody id="recipeTableBody" class="divide-y divide-slate-250 dark:divide-slate-850 text-xs block md:table-row-group space-y-3 md:space-y-0 p-2 md:p-0">
               <!-- Dyn Loaded Recipe Rows -->
             </tbody>
           </table>
         </div>
-
+      </div>
         <!-- Add Ingredient Row Footer -->
-        <div class="p-2.5 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/40 flex justify-between items-center">
-          <button onclick="addRecipeRow()" class="bg-white hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-250 dark:border-transparent active:scale-[0.98] px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition">
-            <i data-lucide="plus" class="w-3.5 h-3.5 text-violet-500 dark:text-violet-400"></i>
-            Add Ingredient Row
-          </button>
-          
-          <div class="text-[10px] font-semibold text-slate-450 dark:text-slate-500 uppercase flex gap-4">
-            <span>Total Weight: <strong id="totalWeightVal" class="text-slate-700 dark:text-slate-300">0.00g</strong></span>
-            <span>Total Cost: <strong id="totalCostVal" class="text-emerald-600 dark:text-emerald-400">₹0.00</strong></span>
+        <div class="p-3 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/40 flex flex-col sm:flex-row justify-between items-center gap-3 flex-shrink-0">
+          <!-- Totals displays first on mobile, styled side-by-side with border -->
+          <div class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase flex justify-between w-full sm:w-auto gap-4 border-b sm:border-b-0 border-slate-200 dark:border-slate-800/60 pb-2.5 sm:pb-0">
+            <span>Total Weight: <strong id="totalWeightVal" class="text-slate-800 dark:text-slate-200 font-extrabold font-mono text-[11px]">0.00g</strong></span>
+            <span>Total Cost: <strong id="totalCostVal" class="text-emerald-600 dark:text-emerald-455 font-extrabold font-mono text-[11px]">₹0.00</strong></span>
+          </div>
+
+          <div class="flex items-center gap-2 w-full sm:w-auto">
+            <!-- Add Ingredient Button -->
+            <button onclick="addRecipeRow()" class="flex-grow sm:flex-initial bg-white hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-250 dark:border-transparent active:scale-[0.98] px-3.5 py-2 sm:py-1.5 rounded-lg text-xs font-bold sm:font-semibold flex items-center justify-center gap-1.5 transition shadow-sm">
+              <i data-lucide="plus" class="w-4 h-4 text-violet-500 dark:text-violet-400"></i>
+              <span class="whitespace-nowrap">Add Ingredient</span>
+            </button>
+            
+            <!-- View Margins Button (Mobile Only) -->
+            <button onclick="toggleCostingPanel()" class="flex-grow lg:hidden bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white border border-transparent active:scale-[0.98] px-3.5 py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition shadow-md shadow-violet-900/10">
+              <i data-lucide="trending-up" class="w-4 h-4"></i>
+              <span class="whitespace-nowrap">View Margins</span>
+            </button>
           </div>
         </div>
 
       </section>
 
+      <!-- Backdrop Overlay for Mobile Costing Sheet -->
+      <div id="costingPanelBackdrop" onclick="toggleCostingPanel()" class="hidden fixed inset-0 bg-slate-950/50 backdrop-blur-xs z-30 lg:hidden transition-opacity duration-300 opacity-0"></div>
+
       <!-- RIGHT COLUMN: Profit Analysis & Sizing Panel (40% Width) -->
-      <section id="rightCostingPanel" class="w-full lg:w-[400px] flex flex-col bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-850 rounded-xl overflow-hidden backdrop-blur-md">
+      <section id="rightCostingPanel" class="fixed inset-x-0 bottom-0 z-40 w-full lg:w-[400px] flex flex-col bg-white dark:bg-slate-900 border-t lg:border border-slate-200 dark:border-slate-850 rounded-t-2xl lg:rounded-xl overflow-hidden backdrop-blur-md transition-transform duration-300 transform translate-y-full lg:translate-y-0 lg:static lg:h-auto max-h-[80vh] lg:max-h-none shadow-2xl lg:shadow-none">
         
+        <!-- Drawer Drag handle for Premium Mobile Sheet UX -->
+        <div class="w-12 h-1 bg-slate-300 dark:bg-slate-700 rounded-full mx-auto mt-2.5 mb-1.5 lg:hidden animate-pulse"></div>
+
         <!-- Header -->
         <div class="p-3 border-b border-slate-200 dark:border-slate-800/80 bg-slate-50 dark:bg-slate-900/40 flex items-center justify-between">
           <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-350 flex items-center gap-1.5">
             <i data-lucide="trending-up" class="w-4 h-4 text-emerald-600 dark:text-emerald-500"></i>
             Costing & Margin Analysis
           </h3>
-          <div class="text-[10px] text-slate-400 dark:text-slate-550 font-semibold uppercase">Interactive Sizer</div>
-        </div>
-
-        <!-- Yield Calculation Mode Toggle -->
-        <div class="px-3 py-2 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/20 flex justify-between items-center text-xs">
-          <label for="yieldCalculationMode" class="font-bold text-slate-550 dark:text-slate-400 uppercase tracking-wider text-[10px]">Calculation Mode</label>
-          <select id="yieldCalculationMode" onchange="updateActiveSoapYieldMode(this.value)" class="bg-white dark:bg-slate-800 border border-slate-250 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded px-1.5 py-0.5 text-xs font-bold focus:outline-none">
-            <option value="count">Fixed Bar Counts</option>
-            <option value="weight">Bar Weight Slices</option>
-          </select>
-        </div>
-
-        <!-- Count Mode Container Panel -->
-        <div id="countModePanel" class="p-3 border-b border-slate-200 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-950/20 grid grid-cols-2 gap-3">
-          <div>
-            <label class="block text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mb-1">Batch Yield Option A</label>
-            <div class="flex items-center gap-1.5">
-              <input type="number" id="batchYieldA" value="18" min="1" onchange="updateActiveSoapYieldA(this.value)" class="w-full px-2 py-1 text-xs rounded bg-white border border-slate-250 dark:bg-slate-800 dark:border-slate-700 text-slate-800 dark:text-slate-100 font-bold text-center" />
-              <span class="text-[10px] text-slate-500 font-semibold uppercase">Bars</span>
-            </div>
-          </div>
-          <div>
-            <label class="block text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mb-1">Batch Yield Option B</label>
-            <div class="flex items-center gap-1.5">
-              <input type="number" id="batchYieldB" value="16" min="1" onchange="updateActiveSoapYieldB(this.value)" class="w-full px-2 py-1 text-xs rounded bg-white border border-slate-250 dark:bg-slate-800 dark:border-slate-700 text-slate-800 dark:text-slate-100 font-bold text-center" />
-              <span class="text-[10px] text-slate-500 font-semibold uppercase">Bars</span>
-            </div>
+          <div class="flex items-center gap-2">
+            <div class="text-[10px] text-slate-400 dark:text-slate-550 font-semibold uppercase hidden lg:block">Interactive Sizer</div>
+            <button onclick="toggleCostingPanel()" class="lg:hidden text-slate-400 hover:text-slate-600 dark:hover:text-white p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded transition" title="Close drawer">
+              <i data-lucide="x" class="w-4.5 h-4.5"></i>
+            </button>
           </div>
         </div>
 
-        <!-- Weight Mode Container Panel -->
-        <div id="weightModePanel" class="hidden p-3 border-b border-slate-200 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-950/20 grid grid-cols-3 gap-2">
-          <div>
-            <label class="block text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mb-1">Total Slab Weight</label>
-            <div class="flex items-center gap-1">
-              <input type="number" id="calcSlabGrams" min="1" step="any" onchange="updateActiveSoapSlabGrams(this.value)" class="w-full px-1.5 py-1 text-xs rounded bg-white border border-slate-250 dark:bg-slate-800 dark:border-slate-700 text-slate-800 dark:text-slate-100 font-bold text-center" />
-              <span class="text-[9px] text-slate-500 font-semibold uppercase">g</span>
-            </div>
-          </div>
-          <div>
-            <label class="block text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mb-1">Per Bar Wt (YA)</label>
-            <div class="flex items-center gap-1">
-              <input type="number" id="weightA" min="1" step="any" onchange="updateActiveSoapWeightA(this.value)" class="w-full px-1.5 py-1 text-xs rounded bg-white border border-slate-250 dark:bg-slate-800 dark:border-slate-700 text-slate-800 dark:text-slate-100 font-bold text-center" />
-              <span class="text-[9px] text-slate-500 font-semibold uppercase">g</span>
-            </div>
-          </div>
-          <div>
-            <label class="block text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mb-1">Per Bar Wt (YB)</label>
-            <div class="flex items-center gap-1">
-              <input type="number" id="weightB" min="1" step="any" onchange="updateActiveSoapWeightB(this.value)" class="w-full px-1.5 py-1 text-xs rounded bg-white border border-slate-250 dark:bg-slate-800 dark:border-slate-700 text-slate-800 dark:text-slate-100 font-bold text-center" />
-              <span class="text-[9px] text-slate-500 font-semibold uppercase">g</span>
-            </div>
-          </div>
-        </div>
+        <!-- Scrollable panel body on mobile view, flex layout on desktop -->
+        <div class="flex-1 overflow-y-auto lg:overflow-visible lg:flex lg:flex-col scrollbar-hide">
 
-        <!-- KPI Cost per single bar and Wastage Stats -->
-        <div class="p-2.5 border-b border-slate-205 dark:border-slate-800/50 bg-slate-50/50 dark:bg-slate-900/10 grid grid-cols-2 gap-2 text-center text-xs">
-          <!-- Option A Stats -->
-          <div class="bg-slate-50 dark:bg-slate-950/30 rounded-lg p-2 border border-slate-200 dark:border-slate-850 flex flex-col gap-1">
-            <span class="text-[9px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-tight block">Option A Profile</span>
-            <div class="flex justify-between px-1 text-[10px] text-slate-600 dark:text-slate-400 border-b border-slate-200/50 dark:border-slate-800/50 pb-0.5">
-              <span>Yield:</span>
-              <strong id="calculatedYieldA" class="text-slate-800 dark:text-slate-200">0 Bars</strong>
-            </div>
-            <div class="flex justify-between px-1 text-[10px] text-slate-600 dark:text-slate-400 border-b border-slate-200/50 dark:border-slate-800/50 pb-0.5">
-              <span>Scrap:</span>
-              <strong id="calculatedWastageA" class="text-amber-600 dark:text-amber-500">0.00g (0%)</strong>
-            </div>
-            <div class="flex justify-between px-1 text-[10px] text-slate-600 dark:text-slate-400 pt-0.5">
-              <span>Cost/Bar:</span>
-              <strong id="unitCostA" class="text-indigo-650 dark:text-indigo-400 font-bold font-mono">₹0.00</strong>
-            </div>
+          <!-- Yield Calculation Mode Toggle -->
+          <div class="px-3 py-2 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/20 flex justify-between items-center text-xs flex-shrink-0">
+            <label for="yieldCalculationMode" class="font-bold text-slate-550 dark:text-slate-400 uppercase tracking-wider text-[10px]">Calculation Mode</label>
+            <select id="yieldCalculationMode" onchange="updateActiveSoapYieldMode(this.value)" class="bg-white dark:bg-slate-800 border border-slate-250 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded px-1.5 py-0.5 text-xs font-bold focus:outline-none">
+              <option value="count">Fixed Bar Counts</option>
+              <option value="weight">Bar Weight Slices</option>
+            </select>
           </div>
-          
-          <!-- Option B Stats -->
-          <div class="bg-slate-50 dark:bg-slate-950/30 rounded-lg p-2 border border-slate-200 dark:border-slate-850 flex flex-col gap-1">
-            <span class="text-[9px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-tight block">Option B Profile</span>
-            <div class="flex justify-between px-1 text-[10px] text-slate-600 dark:text-slate-400 border-b border-slate-200/50 dark:border-slate-800/50 pb-0.5">
-              <span>Yield:</span>
-              <strong id="calculatedYieldB" class="text-slate-800 dark:text-slate-200">0 Bars</strong>
-            </div>
-            <div class="flex justify-between px-1 text-[10px] text-slate-600 dark:text-slate-400 border-b border-slate-200/50 dark:border-slate-800/50 pb-0.5">
-              <span>Scrap:</span>
-              <strong id="calculatedWastageB" class="text-amber-600 dark:text-amber-500">0.00g (0%)</strong>
-            </div>
-            <div class="flex justify-between px-1 text-[10px] text-slate-600 dark:text-slate-400 pt-0.5">
-              <span>Cost/Bar:</span>
-              <strong id="unitCostB" class="text-emerald-650 dark:text-emerald-450 font-bold font-mono">₹0.00</strong>
-            </div>
-          </div>
-        </div>
 
-        <!-- Profit Analysis Grid Table with Micro-Bar displays -->
-        <div class="flex-1 overflow-y-auto p-2 scrollbar-hide">
-          <div class="space-y-1.5" id="profitRowsContainer">
-            <!-- Dynamic Cost Matrix Rows Loaded Here -->
+          <!-- Count Mode Container Panel -->
+          <div id="countModePanel" class="p-3 border-b border-slate-200 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-950/20 grid grid-cols-2 gap-3 flex-shrink-0">
+            <div>
+              <label class="block text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mb-1">Batch Yield Option A</label>
+              <div class="flex items-center gap-1.5">
+                <input type="number" id="batchYieldA" value="18" min="1" onchange="updateActiveSoapYieldA(this.value)" class="w-full px-2 py-1 text-xs rounded bg-white border border-slate-250 dark:bg-slate-800 dark:border-slate-700 text-slate-800 dark:text-slate-100 font-bold text-center" />
+                <span class="text-[10px] text-slate-500 font-semibold uppercase">Bars</span>
+              </div>
+            </div>
+            <div>
+              <label class="block text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mb-1">Batch Yield Option B</label>
+              <div class="flex items-center gap-1.5">
+                <input type="number" id="batchYieldB" value="16" min="1" onchange="updateActiveSoapYieldB(this.value)" class="w-full px-2 py-1 text-xs rounded bg-white border border-slate-250 dark:bg-slate-800 dark:border-slate-700 text-slate-800 dark:text-slate-100 font-bold text-center" />
+                <span class="text-[10px] text-slate-500 font-semibold uppercase">Bars</span>
+              </div>
+            </div>
           </div>
+
+          <!-- Weight Mode Container Panel -->
+          <div id="weightModePanel" class="hidden p-3 border-b border-slate-200 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-950/20 grid grid-cols-3 gap-2 flex-shrink-0">
+            <div>
+              <label class="block text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mb-1">Total Slab Weight</label>
+              <div class="flex items-center gap-1">
+                <input type="number" id="calcSlabGrams" min="1" step="any" onchange="updateActiveSoapSlabGrams(this.value)" class="w-full px-1.5 py-1 text-xs rounded bg-white border border-slate-250 dark:bg-slate-800 dark:border-slate-700 text-slate-800 dark:text-slate-100 font-bold text-center" />
+                <span class="text-[9px] text-slate-500 font-semibold uppercase">g</span>
+              </div>
+            </div>
+            <div>
+              <label class="block text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mb-1">Per Bar Wt (YA)</label>
+              <div class="flex items-center gap-1">
+                <input type="number" id="weightA" min="1" step="any" onchange="updateActiveSoapWeightA(this.value)" class="w-full px-1.5 py-1 text-xs rounded bg-white border border-slate-250 dark:bg-slate-800 dark:border-slate-700 text-slate-800 dark:text-slate-100 font-bold text-center" />
+                <span class="text-[9px] text-slate-500 font-semibold uppercase">g</span>
+              </div>
+            </div>
+            <div>
+              <label class="block text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mb-1">Per Bar Wt (YB)</label>
+              <div class="flex items-center gap-1">
+                <input type="number" id="weightB" min="1" step="any" onchange="updateActiveSoapWeightB(this.value)" class="w-full px-1.5 py-1 text-xs rounded bg-white border border-slate-250 dark:bg-slate-800 dark:border-slate-700 text-slate-800 dark:text-slate-100 font-bold text-center" />
+                <span class="text-[9px] text-slate-500 font-semibold uppercase">g</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- KPI Cost per single bar and Wastage Stats -->
+          <div class="p-2.5 border-b border-slate-205 dark:border-slate-800/50 bg-slate-50/50 dark:bg-slate-900/10 grid grid-cols-2 gap-2 text-center text-xs flex-shrink-0">
+            <!-- Option A Stats -->
+            <div class="bg-slate-50 dark:bg-slate-950/30 rounded-lg p-2 border border-slate-200 dark:border-slate-850 flex flex-col gap-1">
+              <span class="text-[9px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-tight block">Option A Profile</span>
+              <div class="flex justify-between px-1 text-[10px] text-slate-600 dark:text-slate-400 border-b border-slate-200/50 dark:border-slate-800/50 pb-0.5">
+                <span>Yield:</span>
+                <strong id="calculatedYieldA" class="text-slate-800 dark:text-slate-200">0 Bars</strong>
+              </div>
+              <div class="flex justify-between px-1 text-[10px] text-slate-600 dark:text-slate-400 border-b border-slate-200/50 dark:border-slate-800/50 pb-0.5">
+                <span>Scrap:</span>
+                <strong id="calculatedWastageA" class="text-amber-600 dark:text-amber-500">0.00g (0%)</strong>
+              </div>
+              <div class="flex justify-between px-1 text-[10px] text-slate-600 dark:text-slate-400 pt-0.5">
+                <span>Cost/Bar:</span>
+                <strong id="unitCostA" class="text-indigo-650 dark:text-indigo-400 font-bold font-mono">₹0.00</strong>
+              </div>
+            </div>
+            
+            <!-- Option B Stats -->
+            <div class="bg-slate-50 dark:bg-slate-950/30 rounded-lg p-2 border border-slate-200 dark:border-slate-850 flex flex-col gap-1">
+              <span class="text-[9px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-tight block">Option B Profile</span>
+              <div class="flex justify-between px-1 text-[10px] text-slate-600 dark:text-slate-400 border-b border-slate-200/50 dark:border-slate-800/50 pb-0.5">
+                <span>Yield:</span>
+                <strong id="calculatedYieldB" class="text-slate-800 dark:text-slate-200">0 Bars</strong>
+              </div>
+              <div class="flex justify-between px-1 text-[10px] text-slate-600 dark:text-slate-400 border-b border-slate-200/50 dark:border-slate-800/50 pb-0.5">
+                <span>Scrap:</span>
+                <strong id="calculatedWastageB" class="text-amber-600 dark:text-amber-500">0.00g (0%)</strong>
+              </div>
+              <div class="flex justify-between px-1 text-[10px] text-slate-600 dark:text-slate-400 pt-0.5">
+                <span>Cost/Bar:</span>
+                <strong id="unitCostB" class="text-emerald-650 dark:text-emerald-450 font-bold font-mono">₹0.00</strong>
+              </div>
+            </div>
+          </div>
+
+          <!-- Profit Analysis Grid Table with Micro-Bar displays -->
+          <div class="flex-grow lg:flex-grow-0 lg:flex-1 lg:overflow-y-auto p-2 scrollbar-hide overflow-visible">
+            <div class="space-y-1.5" id="profitRowsContainer">
+              <!-- Dynamic Cost Matrix Rows Loaded Here -->
+            </div>
+          </div>
+
         </div>
 
       </section>
 
     </div>
+
   </main>
 </div>
 
@@ -1169,43 +1197,52 @@ function renderActiveSoapWorkspace() {
     const total = (parseFloat(item.gram) || 0) * rate;
 
     tableHtml += `
-      <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition border-b border-slate-200 dark:border-slate-850">
+      <tr class="grid grid-cols-2 md:table-row p-3 md:p-0 bg-white dark:bg-slate-900/40 md:bg-transparent rounded-xl border border-slate-200 dark:border-slate-800/80 md:border-none hover:bg-slate-50 dark:hover:bg-slate-800/30 transition relative gap-x-3 gap-y-2 md:gap-0 shadow-sm md:shadow-none">
         <!-- Ingredient Name select autocomplete -->
-        <td class="p-1.5">
+        <td class="col-span-2 md:table-cell p-0.5 md:p-1.5">
+          <label class="block md:hidden text-[9px] text-slate-450 dark:text-slate-500 font-bold uppercase mb-1">Ingredient</label>
           <input type="text" list="ingredientsDatalist" value="${item.ingredient}"
             onchange="updateRecipeItem(${index}, 'ingredient', this.value)"
-            class="w-full bg-slate-100 dark:bg-slate-800/80 border border-slate-250 dark:border-slate-700 rounded px-2 py-1 text-xs text-slate-800 dark:text-slate-100 focus:outline-none placeholder-slate-400 dark:placeholder-slate-500 font-medium shadow-sm" 
+            class="w-full bg-slate-100 dark:bg-slate-800/80 border border-slate-250 dark:border-slate-700 rounded px-2.5 py-1.5 md:px-2 md:py-1 text-xs text-slate-850 dark:text-slate-100 focus:outline-none placeholder-slate-400 dark:placeholder-slate-500 font-semibold shadow-sm" 
             placeholder="Search/Add material..." />
         </td>
 
         <!-- Percentage % -->
-        <td class="p-1.5 text-center">
+        <td class="col-span-1 md:table-cell p-0.5 md:p-1.5">
+          <label class="block md:hidden text-[9px] text-slate-450 dark:text-slate-500 font-bold uppercase mb-1">% Ratio</label>
           <input type="number" step="any" min="0" value="${item.percentage !== null && item.percentage !== undefined ? item.percentage : ''}"
             onchange="updateRecipeItem(${index}, 'percentage', this.value)"
-            class="w-20 bg-slate-100 dark:bg-slate-800/80 border border-slate-250 dark:border-slate-700 rounded px-2 py-1 text-xs text-slate-800 dark:text-slate-100 text-center focus:outline-none shadow-sm" 
+            class="w-full md:w-20 bg-slate-100 dark:bg-slate-800/80 border border-slate-250 dark:border-slate-700 rounded px-2.5 py-1.5 md:px-2 md:py-1 text-xs text-slate-850 dark:text-slate-100 text-center focus:outline-none shadow-sm font-semibold" 
             placeholder="—" />
         </td>
 
         <!-- Gram Weight -->
-        <td class="p-1.5 text-right">
+        <td class="col-span-1 md:table-cell p-0.5 md:p-1.5">
+          <label class="block md:hidden text-[9px] text-slate-450 dark:text-slate-500 font-bold uppercase mb-1">Grams (g)</label>
           <input type="number" step="any" min="0" value="${item.gram}"
             onchange="updateRecipeItem(${index}, 'gram', this.value)"
-            class="w-24 bg-slate-100 dark:bg-slate-800/80 border border-slate-250 dark:border-slate-700 rounded px-2 py-1 text-xs font-bold text-slate-800 dark:text-slate-100 text-right focus:outline-none shadow-sm" />
+            class="w-full md:w-24 bg-slate-100 dark:bg-slate-800/80 border border-slate-250 dark:border-slate-700 rounded px-2.5 py-1.5 md:px-2 md:py-1 text-xs font-bold text-slate-850 dark:text-slate-100 text-right focus:outline-none shadow-sm" />
         </td>
 
         <!-- Live Master Rate display -->
-        <td class="p-1.5 text-right font-bold text-slate-700 dark:text-slate-400 font-mono text-[11px] pr-3">
-          ₹${rate.toFixed(2)}
+        <td class="col-span-1 md:table-cell p-0.5 md:p-1.5 flex flex-col md:block justify-center">
+          <label class="block md:hidden text-[9px] text-slate-450 dark:text-slate-500 font-bold uppercase mb-0.5">Rate</label>
+          <div class="font-bold text-slate-700 dark:text-slate-400 font-mono text-[11px] md:pr-3 md:text-right mt-1 md:mt-0">
+            ₹${rate.toFixed(2)}<span class="text-[9px] font-semibold text-slate-400 dark:text-slate-550 md:hidden">/g</span>
+          </div>
         </td>
 
         <!-- Sub total Cost -->
-        <td class="p-1.5 text-right font-extrabold text-slate-800 dark:text-slate-100 font-mono text-[11px] pr-3">
-          ₹${total.toFixed(2)}
+        <td class="col-span-1 md:table-cell p-0.5 md:p-1.5 flex flex-col md:block justify-center">
+          <label class="block md:hidden text-[9px] text-slate-450 dark:text-slate-500 font-bold uppercase mb-0.5">Total Cost</label>
+          <div class="font-extrabold text-slate-800 dark:text-slate-100 font-mono text-[11px] md:pr-3 md:text-right mt-1 md:mt-0">
+            ₹${total.toFixed(2)}
+          </div>
         </td>
 
         <!-- Remove Actions -->
-        <td class="p-1.5 text-center">
-          <button onclick="deleteRecipeRow(${index})" class="text-slate-500 hover:text-rose-600 dark:text-slate-400 dark:hover:text-rose-400 p-1 hover:bg-slate-200 dark:hover:bg-slate-800 rounded transition">
+        <td class="absolute top-1.5 right-1.5 md:static md:table-cell p-0.5 md:p-1.5 text-center flex items-center justify-center">
+          <button onclick="deleteRecipeRow(${index})" class="text-slate-450 hover:text-rose-605 dark:text-slate-550 dark:hover:text-rose-400 p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded transition" title="Remove ingredient">
             <i data-lucide="trash" class="w-3.5 h-3.5"></i>
           </button>
         </td>
@@ -1980,6 +2017,37 @@ async function updateMasterRate(name, value) {
 function toggleMobileSidebar() {
   const sidebar = document.getElementById('sidebar');
   sidebar.classList.toggle('-translate-x-full');
+}
+
+// Toggle mobile costing/margin analysis bottom sheet
+function toggleCostingPanel() {
+  const panel = document.getElementById('rightCostingPanel');
+  const backdrop = document.getElementById('costingPanelBackdrop');
+  if (!panel || !backdrop) return;
+
+  const isHidden = panel.classList.contains('translate-y-full');
+
+  if (isHidden) {
+    // Show panel
+    backdrop.classList.remove('hidden');
+    // Force reflow
+    backdrop.offsetHeight;
+    backdrop.classList.add('opacity-100');
+    panel.classList.remove('translate-y-full');
+    panel.classList.add('translate-y-0');
+  } else {
+    // Hide panel
+    backdrop.classList.remove('opacity-100');
+    panel.classList.remove('translate-y-0');
+    panel.classList.add('translate-y-full');
+    
+    // Wait for animation to hide backdrop
+    setTimeout(() => {
+      if (panel.classList.contains('translate-y-full')) {
+        backdrop.classList.add('hidden');
+      }
+    }, 300);
+  }
 }
 
 // Export formula matrix sheet to system printer / PDF
