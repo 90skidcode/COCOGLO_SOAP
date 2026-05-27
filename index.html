@@ -94,6 +94,13 @@ tailwind.config = {
     border-color: #8b5cf6;
   }
 
+  /* Prevent iOS Safari auto-zoom on input focus (triggered when font-size < 16px) */
+  @supports (-webkit-touch-callout: none) {
+    input, select, textarea {
+      font-size: 16px !important;
+    }
+  }
+
   /* Toast animation */
   @keyframes toast-in {
     0% { transform: translateY(1rem) scale(0.9); opacity: 0; }
@@ -355,7 +362,7 @@ tailwind.config = {
       <section id="leftRecipeSheet" class="flex-1 flex flex-col bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-850 rounded-xl overflow-hidden backdrop-blur-md">
         
         <!-- Outer scroll wrapper for mobile, normal flex container on desktop -->
-        <div class="flex-1 overflow-y-auto lg:flex lg:flex-col scrollbar-hide flex flex-col">
+        <div class="flex-1 overflow-y-auto lg:flex lg:flex-col scrollbar-hide">
         
         <!-- Recipe General Header Info -->
         <div class="p-3 border-b border-slate-200 dark:border-slate-800/80 bg-slate-50 dark:bg-slate-900/40 flex flex-wrap items-center justify-between gap-3">
@@ -423,7 +430,7 @@ tailwind.config = {
         </div>
 
         <!-- High-Density Costing Spreadsheet Grid -->
-        <div class="flex-grow overflow-x-auto overflow-y-auto scrollbar-hide">
+        <div class="flex-grow overflow-x-auto lg:overflow-y-auto scrollbar-hide">
           <table class="w-full text-left border-collapse block md:table">
             <thead class="hidden md:table-header-group sticky top-0 bg-slate-100 dark:bg-slate-900 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider border-b border-slate-200 dark:border-slate-800 z-10">
               <tr>
