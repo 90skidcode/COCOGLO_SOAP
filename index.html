@@ -355,7 +355,7 @@ tailwind.config = {
       <section id="leftRecipeSheet" class="flex-1 flex flex-col bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-850 rounded-xl overflow-hidden backdrop-blur-md">
         
         <!-- Outer scroll wrapper for mobile, normal flex container on desktop -->
-        <div class="flex-1 overflow-y-auto lg:overflow-visible lg:flex lg:flex-col scrollbar-hide flex flex-col">
+        <div class="flex-1 overflow-y-auto lg:flex lg:flex-col scrollbar-hide flex flex-col">
         
         <!-- Recipe General Header Info -->
         <div class="p-3 border-b border-slate-200 dark:border-slate-800/80 bg-slate-50 dark:bg-slate-900/40 flex flex-wrap items-center justify-between gap-3">
@@ -423,7 +423,7 @@ tailwind.config = {
         </div>
 
         <!-- High-Density Costing Spreadsheet Grid -->
-        <div class="flex-grow overflow-visible lg:overflow-y-auto lg:scrollbar-hide">
+        <div class="flex-grow overflow-x-auto overflow-y-auto scrollbar-hide">
           <table class="w-full text-left border-collapse block md:table">
             <thead class="hidden md:table-header-group sticky top-0 bg-slate-100 dark:bg-slate-900 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider border-b border-slate-200 dark:border-slate-800 z-10">
               <tr>
@@ -490,7 +490,7 @@ tailwind.config = {
         </div>
 
         <!-- Scrollable panel body on mobile view, flex layout on desktop -->
-        <div class="flex-1 overflow-y-auto lg:overflow-visible lg:flex lg:flex-col scrollbar-hide">
+        <div class="flex-1 overflow-y-auto lg:overflow-hidden lg:flex lg:flex-col scrollbar-hide">
 
           <!-- Yield Calculation Mode Toggle -->
           <div class="px-3 py-2 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/20 flex justify-between items-center text-xs flex-shrink-0">
@@ -582,7 +582,7 @@ tailwind.config = {
           </div>
 
           <!-- Profit Analysis Grid Table with Micro-Bar displays -->
-          <div class="flex-grow lg:flex-grow-0 lg:flex-1 lg:overflow-y-auto p-2 scrollbar-hide overflow-visible">
+          <div class="flex-grow lg:flex-1 lg:min-h-0 lg:overflow-y-auto p-2 scrollbar-hide overflow-y-auto">
             <div class="space-y-1.5" id="profitRowsContainer">
               <!-- Dynamic Cost Matrix Rows Loaded Here -->
             </div>
@@ -1201,10 +1201,15 @@ function renderActiveSoapWorkspace() {
         <!-- Ingredient Name select autocomplete -->
         <td class="col-span-2 md:table-cell p-0.5 md:p-1.5">
           <label class="block md:hidden text-[9px] text-slate-450 dark:text-slate-500 font-bold uppercase mb-1">Ingredient</label>
-          <input type="text" list="ingredientsDatalist" value="${item.ingredient}"
-            onchange="updateRecipeItem(${index}, 'ingredient', this.value)"
-            class="w-full bg-slate-100 dark:bg-slate-800/80 border border-slate-250 dark:border-slate-700 rounded px-2.5 py-1.5 md:px-2 md:py-1 text-xs text-slate-850 dark:text-slate-100 focus:outline-none placeholder-slate-400 dark:placeholder-slate-500 font-semibold shadow-sm" 
-            placeholder="Search/Add material..." />
+          <input type="text"
+            value="${item.ingredient}"
+            data-index="${index}"
+            oninput="filterIngredientDropdown(this)"
+            onfocus="openIngredientDropdown(this)"
+            onblur="blurIngredientDropdown(this, ${index})"
+            autocomplete="off"
+            class="w-full bg-slate-100 dark:bg-slate-800/80 border border-slate-250 dark:border-slate-700 rounded px-2.5 py-1.5 md:px-2 md:py-1 text-xs text-slate-850 dark:text-slate-100 focus:outline-none placeholder-slate-400 dark:placeholder-slate-500 font-semibold shadow-sm"
+            placeholder="Search material..." />
         </td>
 
         <!-- Percentage % -->
@@ -1434,12 +1439,7 @@ async function createNewSoap() {
       weightA: 90.00,
       weightB: 100.00,
       slabGrams: 1500.00,
-      recipe: [{
-        id: 'local-item-' + Math.random().toString(36).substr(2, 9),
-        ingredient: 'Coconut oil',
-        percentage: 29,
-        gram: 435
-      }]
+      recipe: []
     };
     localState.soaps.push(newSoap);
     localState.activeSoapId = newSoap.id;
@@ -1469,19 +1469,6 @@ async function createNewSoap() {
 
     if (soapError) throw soapError;
 
-    const { data: newRow, error: itemError } = await supabaseClient
-      .from('recipe_ingredients')
-      .insert({
-        soap_id: newSoap.id,
-        ingredient: 'Coconut oil',
-        percentage: 29,
-        gram: 435
-      })
-      .select()
-      .single();
-
-    if (itemError) throw itemError;
-
     const soapObj = {
       id: newSoap.id,
       name: newSoap.name,
@@ -1493,12 +1480,7 @@ async function createNewSoap() {
       weightA: 90.00,
       weightB: 100.00,
       slabGrams: 1500.00,
-      recipe: [{
-        id: newRow.id,
-        ingredient: 'Coconut oil',
-        percentage: 29,
-        gram: 435
-      }]
+      recipe: []
     };
     
     localState.soaps.push(soapObj);
@@ -1765,18 +1747,79 @@ function addRecipeRow() {
   const activeSoap = localState.soaps.find(s => s.id === localState.activeSoapId);
   if (!activeSoap) return;
 
-  const defaultIngredient = Object.keys(localState.masterIngredients)[0] || 'Water';
-
   const newItem = {
     id: 'temp-' + Math.random().toString(36).substr(2, 9),
-    ingredient: defaultIngredient,
-    percentage: 0,
+    ingredient: '',
+    percentage: null,
     gram: 0
   };
-  
+
   activeSoap.recipe.push(newItem);
   renderActiveSoapWorkspace();
   setUnsavedStatus(true);
+
+  const inputs = document.querySelectorAll('#recipeTableBody input[data-index]');
+  if (inputs.length) {
+    const lastInput = inputs[inputs.length - 1];
+    lastInput.focus();
+    openIngredientDropdown(lastInput);
+  }
+}
+
+// Searchable ingredient combobox — portal-based to escape overflow/backdrop containers
+function _buildPortalOptions(index, query) {
+  return Object.keys(localState.masterIngredients).sort()
+    .filter(name => !query || name.toLowerCase().includes(query))
+    .map(name => `<div class="px-3 py-1.5 font-semibold text-slate-800 dark:text-slate-100 cursor-pointer hover:bg-violet-50 dark:hover:bg-slate-700"
+      onmousedown="selectIngredientOption(event,${index},'${name.replace(/\\/g,'\\\\').replace(/'/g,"\\'")}')">${name}</div>`)
+    .join('');
+}
+
+function _positionPortal(portal, input) {
+  const rect = input.getBoundingClientRect();
+  portal.style.top  = (rect.bottom + 2) + 'px';
+  portal.style.left = rect.left + 'px';
+  portal.style.width = rect.width + 'px';
+}
+
+function openIngredientDropdown(input) {
+  const portal = document.getElementById('ingredientDropdownPortal');
+  const index = parseInt(input.dataset.index);
+  portal._activeInput = input;
+  portal.innerHTML = _buildPortalOptions(index, input.value.toLowerCase());
+  _positionPortal(portal, input);
+  portal.classList.remove('hidden');
+}
+
+function filterIngredientDropdown(input) {
+  const portal = document.getElementById('ingredientDropdownPortal');
+  const index = parseInt(input.dataset.index);
+  portal._activeInput = input;
+  portal.innerHTML = _buildPortalOptions(index, input.value.toLowerCase());
+  _positionPortal(portal, input);
+  portal.classList.remove('hidden');
+}
+
+function selectIngredientOption(event, index, name) {
+  event.preventDefault();
+  const portal = document.getElementById('ingredientDropdownPortal');
+  if (portal._activeInput) portal._activeInput.value = name;
+  portal._activeInput = null;
+  portal.classList.add('hidden');
+  updateRecipeItem(index, 'ingredient', name);
+}
+
+function blurIngredientDropdown(input, index) {
+  setTimeout(() => {
+    const portal = document.getElementById('ingredientDropdownPortal');
+    portal.classList.add('hidden');
+    portal._activeInput = null;
+    if (!document.body.contains(input)) return;
+    const activeSoap = localState.soaps.find(s => s.id === localState.activeSoapId);
+    if (activeSoap && activeSoap.recipe[index]) {
+      input.value = activeSoap.recipe[index].ingredient || '';
+    }
+  }, 150);
 }
 
 // Update existing Recipe Ingredient row parameters in memory
@@ -2119,6 +2162,9 @@ function exportToPrint() {
 
   </div>
 </div>
+
+<!-- Ingredient search portal — rendered outside all overflow/backdrop containers -->
+<div id="ingredientDropdownPortal" class="hidden bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md shadow-xl max-h-44 overflow-y-auto text-xs" style="position:fixed;z-index:9999"></div>
 
 </body>
 </html>
